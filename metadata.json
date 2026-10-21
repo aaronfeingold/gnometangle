@@ -1,0 +1,8 @@
+{
+  "uuid": "gnometangle@aaronfeingold.github.io",
+  "name": "Gnometangle",
+  "description": "Move and resize windows with keyboard shortcuts, inspired by Rectangle for macOS. Halves, thirds, fourths, corners, maximize, center, restore and multi-monitor moves.",
+  "shell-version": ["45", "46", "47", "48", "49", "50"],
+  "url": "https://github.com/aaronfeingold/gnometangle",
+  "settings-schema": "org.gnome.shell.extensions.gnometangle"
+}
