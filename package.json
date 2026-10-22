@@ -1,0 +1,47 @@
+{
+  "name": "gnometangle",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Rectangle-style keyboard window snapping for GNOME Shell",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "pack": "node scripts/build.mjs --zip",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@girs/adw-1": "4.9.0",
+    "@girs/gdk-4.0": "4.9.0",
+    "@girs/gio-2.0": "4.9.0",
+    "@girs/gjs": "4.9.0",
+    "@girs/glib-2.0": "4.9.0",
+    "@girs/gnome-shell": "50.0.4",
+    "@girs/gobject-2.0": "4.9.0",
+    "@girs/gtk-4.0": "4.9.0",
+    "@girs/meta-18": "4.9.0",
+    "@girs/shell-18": "4.9.0",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.13.0",
+    "prettier": "^3.9.10",
+    "typescript": "5.9.3",
+    "typescript-eslint": "^8.72.0",
+    "vitest": "^5.0.5"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}
