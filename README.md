@@ -64,7 +64,8 @@ terminal wins. Rebind "Last Two Thirds" (or the terminal shortcut) if you want b
 ### From a release
 
 1. Download `gnometangle@aaronfeingold.github.io.shell-extension.zip` from the
-   [latest release](https://github.com/aaronfeingold/gnometangle/releases/latest).
+   [latest release](https://github.com/aaronfeingold/gnometangle/releases/latest). Each release also has
+   `SHA256SUMS` and a signed build attestation; see [SECURITY.md](SECURITY.md) to verify a download.
 2. Install and enable it:
 
    ```sh
@@ -131,15 +132,21 @@ scripts/build.mjs Bundles with esbuild and generates the GSettings schema from s
 The GSettings schema is generated, so adding an action means adding one line to `src/core/actions.ts` and handling
 it in `src/core/geometry.ts`.
 
+### Contributing
+
+Pull requests are welcome. `main` only changes through pull requests that pass CI, and the maintainer reviews
+each one before it merges.
+
 ### Releasing
 
-Bump `version` in `package.json`, merge, then push a matching tag:
+Bump `version` in `package.json` and merge that pull request. Then tag the merge commit on `main`:
 
 ```sh
-git tag v0.1.0 && git push origin v0.1.0
+git switch main && git pull && git tag v0.1.0 && git push origin v0.1.0
 ```
 
-The release workflow builds the zip and attaches it to a GitHub release. That zip is what gets uploaded to
+The release workflow refuses tags that aren't on `main` or don't match `package.json`. It runs the full checks,
+builds the zip and publishes it with `SHA256SUMS` and a build attestation. That zip is what gets uploaded to
 extensions.gnome.org.
 
 ## Roadmap

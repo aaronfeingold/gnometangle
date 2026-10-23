@@ -1,13 +1,24 @@
+# Version updates: one grouped PR per ecosystem per month, to keep churn low.
+# Security fixes (CVE alerts) are separate: Dependabot security updates open a PR as soon as an
+# advisory affects a dependency, regardless of this schedule.
 version: 2
 updates:
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
+    ignore:
+      # typescript-eslint doesn't support TypeScript 7 yet:
+      # https://github.com/typescript-eslint/typescript-eslint/issues/10940
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
     groups:
       dev-dependencies:
         patterns: ['*']
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
+    groups:
+      actions:
+        patterns: ['*']

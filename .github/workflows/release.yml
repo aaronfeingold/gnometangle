@@ -1,19 +1,36 @@
 name: Release
 
+# Runs when a v* tag is pushed (only the maintainer can create those; see the repository rulesets).
+# Publishes the extension zip, its SHA256SUMS and a signed build provenance attestation:
+#   gh attestation verify gnometangle@aaronfeingold.github.io.shell-extension.zip -R aaronfeingold/gnometangle
+
 on:
   push:
     tags: ['v*']
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the release
+      id-token: write # sign the attestation
+      attestations: write
     steps:
-      - uses: actions/checkout@v5
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check the tag is on main
+        run: |
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::$GITHUB_REF_NAME points at a commit that is not on main" >&2
+            exit 1
+          fi
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version-file: .nvmrc
           cache: pnpm
@@ -22,12 +39,18 @@ jobs:
         run: |
           version=$(node -p "require('./package.json').version")
           if [ "v$version" != "$GITHUB_REF_NAME" ]; then
-            echo "Tag $GITHUB_REF_NAME does not match package.json version $version" >&2
+            echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $version" >&2
             exit 1
           fi
-      - run: pnpm test
+      - run: pnpm check
       - run: pnpm run pack
+      - run: sha256sum ./*.shell-extension.zip | sed 's| \./| |' > SHA256SUMS
+      - uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+        with:
+          subject-path: '*.shell-extension.zip'
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" ./*.shell-extension.zip --generate-notes --title "$GITHUB_REF_NAME"
+        run: >-
+          gh release create "$GITHUB_REF_NAME" ./*.shell-extension.zip SHA256SUMS
+          --verify-tag --generate-notes --title "$GITHUB_REF_NAME"
