@@ -85,6 +85,13 @@ original_shortcuts=$(ev "$KB.get_strv('switch-to-workspace-left').join('|')")
 ev "Main.extensionManager.enableExtension('$UUID')" >/dev/null
 sleep 1
 check "extension enabled" "1 " "$(ev "$EXT.state + ' ' + ($EXT.error || '')")"
+# Mutter silently refuses a keybinding whose name is already taken; only accepted ones are allowed.
+check "every shortcut registered" "" "$(ev "(() => {
+  const s = $EXT.stateObj.settings;
+  return s.settings_schema.list_keys()
+    .filter(k => s.get_value(k).get_type_string() === 'as' && !(k in Main.wm._allowedKeybindings))
+    .join(',');
+})()")"
 check "conflicting GNOME shortcut removed" "${original_shortcuts//|<Control><Alt>Left/}" \
   "$(ev "$KB.get_strv('switch-to-workspace-left').join('|')")"
 
@@ -118,7 +125,7 @@ check "left half" "$wx,$wy,$half,$wh" "$(run left-half)"
 check "left half repeated (2/3)" "$wx,$wy,$((ww * 2 / 3)),$wh" "$(run left-half)"
 check "right half" "$((wx + ww - half)),$wy,$half,$wh" "$(run right-half)"
 check "top left" "$wx,$wy,$half,$((wh / 2))" "$(run top-left)"
-check "maximize" "$wx,$wy,$ww,$wh" "$(run maximize)"
+check "maximize" "$wx,$wy,$ww,$wh" "$(run maximize-window)"
 check "restore" "$original" "$(run restore)"
 
 # Snapping a window that GNOME itself maximized must unmaximize it first (API differs by version).
@@ -157,6 +164,13 @@ for _ in 1 2 3 4 5; do
   sleep 0.5
 done
 check "Ctrl+Alt+Left key press" "snapped" "$key_result"
+
+# Ctrl+Alt+Enter (evdev 28) maximizes to the work area.
+ev "$EXT.stateObj.run('center')" >/dev/null
+press 29,56,28
+check "Ctrl+Alt+Enter key press" "$wx,$wy,$ww,$wh" "$(ev "$FRAME")"
+ev "$EXT.stateObj.run('restore')" >/dev/null
+sleep 0.4
 
 ev "$EXT.stateObj.run('next-display')" >/dev/null
 sleep 0.4

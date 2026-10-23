@@ -5,7 +5,10 @@
 export type ActionGroup = 'halves' | 'corners' | 'thirds' | 'fourths' | 'size' | 'display';
 
 export interface ActionDef {
-  /** Also the GSettings key that holds the action's shortcuts. */
+  /**
+   * Also the GSettings key that holds the action's shortcuts, and the name Mutter registers the
+   * keybinding under, so it must not match a built-in GNOME keybinding name (e.g. `maximize`).
+   */
   readonly id: string;
   readonly label: string;
   readonly group: ActionGroup;
@@ -42,7 +45,7 @@ export const ACTIONS = [
   { id: 'center-three-fourths', label: 'Center Three Fourths', group: 'fourths', defaults: [] },
   { id: 'last-three-fourths', label: 'Last Three Fourths', group: 'fourths', defaults: [] },
 
-  { id: 'maximize', label: 'Maximize', group: 'size', defaults: [`${CA}Return`] },
+  { id: 'maximize-window', label: 'Maximize', group: 'size', defaults: [`${CA}Return`] },
   { id: 'almost-maximize', label: 'Almost Maximize', group: 'size', defaults: [] },
   { id: 'maximize-height', label: 'Maximize Height', group: 'size', defaults: [`${CA}<Shift>Up`] },
   { id: 'make-smaller', label: 'Make Smaller', group: 'size', defaults: [`${CA}minus`] },
