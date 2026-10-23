@@ -1,13 +1,19 @@
+# Version updates: one grouped PR per ecosystem per month, to keep churn low.
+# Security fixes (CVE alerts) are separate: Dependabot security updates open a PR as soon as an
+# advisory affects a dependency, regardless of this schedule.
 version: 2
 updates:
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
     groups:
       dev-dependencies:
         patterns: ['*']
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
+    groups:
+      actions:
+        patterns: ['*']
