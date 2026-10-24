@@ -1,0 +1,21 @@
+name: Feature request
+description: A new action, setting or behavior
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What you want to do
+      description: The window management task, and why the current actions don't cover it.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: How it would work, including a default shortcut if it should have one.
+  - type: input
+    id: rectangle
+    attributes:
+      label: Rectangle equivalent
+      description: If Rectangle for macOS has this, its name there.

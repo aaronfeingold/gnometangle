@@ -33,6 +33,57 @@ export function normalizeAccelerator(accelerator: string): string | null {
   return ordered.map((mod) => `<${mod}>`).join('') + rest.toLowerCase();
 }
 
+// Display order matches the README ("Ctrl+Alt+Shift+Up", "Ctrl+Alt+Super+Right").
+const LABEL_MODIFIERS: [string, string][] = [
+  ['Control', 'Ctrl'],
+  ['Alt', 'Alt'],
+  ['Shift', 'Shift'],
+  ['Super', 'Super'],
+  ['Meta', 'Meta'],
+  ['Hyper', 'Hyper'],
+];
+
+const KEY_LABELS: Record<string, string> = {
+  left: '←',
+  right: '→',
+  up: '↑',
+  down: '↓',
+  return: 'Enter',
+  kp_enter: 'Enter',
+  backspace: 'Backspace',
+  minus: '-',
+  equal: '=',
+  plus: '+',
+  comma: ',',
+  period: '.',
+  slash: '/',
+  backslash: '\\',
+  semicolon: ';',
+  apostrophe: "'",
+  grave: '`',
+  bracketleft: '[',
+  bracketright: ']',
+  space: 'Space',
+  tab: 'Tab',
+  escape: 'Esc',
+  delete: 'Delete',
+  insert: 'Insert',
+  home: 'Home',
+  end: 'End',
+  page_up: 'Page Up',
+  page_down: 'Page Down',
+};
+
+/** Human-readable form of a GTK accelerator ("<Control><Alt>Left" → "Ctrl+Alt+←"), or "" if invalid. */
+export function acceleratorLabel(accelerator: string): string {
+  const n = normalizeAccelerator(accelerator);
+  if (!n) return '';
+  const key = n.replace(/^(<[^>]+>)*/, '');
+  const parts = LABEL_MODIFIERS.filter(([mod]) => n.includes(`<${mod}>`)).map(([, label]) => label);
+  const keyLabel = KEY_LABELS[key] ?? (key.length === 1 ? key.toUpperCase() : key[0]!.toUpperCase() + key.slice(1));
+  return [...parts, keyLabel].join('+');
+}
+
 /** Builds a set of canonical accelerators for fast conflict lookups. */
 export function acceleratorSet(accelerators: Iterable<string>): Set<string> {
   const set = new Set<string>();

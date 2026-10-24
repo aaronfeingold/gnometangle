@@ -2,6 +2,7 @@
 //   extension.js, prefs.js   bundled with esbuild (GNOME imports stay external)
 //   schemas/*.gschema.xml    generated from src/core/actions.ts
 //   metadata.json            with version-name taken from package.json
+//   stylesheet.css, icons/   copied from src/
 // Flags:
 //   --zip      also write <uuid>.shell-extension.zip in the repo root
 //   --compile  also compile schemas in dist/ (needed for manual installs on GNOME 45)
@@ -50,6 +51,8 @@ const metadata = JSON.parse(readFileSync(join(root, 'metadata.json'), 'utf8'));
 metadata['version-name'] = pkg.version;
 writeFileSync(join(dist, 'metadata.json'), `${JSON.stringify(metadata, null, 2)}\n`);
 cpSync(join(root, 'LICENSE'), join(dist, 'LICENSE'));
+cpSync(join(root, 'src/stylesheet.css'), join(dist, 'stylesheet.css'));
+cpSync(join(root, 'src/icons'), join(dist, 'icons'), { recursive: true });
 
 if (args.has('--compile')) {
   execFileSync('glib-compile-schemas', ['--strict', join(dist, 'schemas')], { stdio: 'inherit' });
@@ -78,6 +81,7 @@ function schemaXml({ ACTIONS, SETTINGS, SCHEMA_ID, SCHEMA_PATH }) {
     intKey(SETTINGS.sizeStep, 30, 5, 200, 'Pixels added or removed per side by Make Larger and Make Smaller'),
     boolKey(SETTINGS.cycleSizes, true, 'Cycle through 1/2, 2/3 and 1/3 when a shortcut is repeated'),
     boolKey(SETTINGS.overrideConflicts, true, 'Temporarily remove GNOME shortcuts that conflict with ours'),
+    boolKey(SETTINGS.showIndicator, true, 'Show the Gnometangle menu in the top bar'),
     `    <key name="${SETTINGS.overriddenShortcuts}" type="s">\n      <default>''</default>\n      <summary>Internal: original GNOME shortcuts saved while overridden (JSON)</summary>\n    </key>`,
     ...ACTIONS.map((a) => {
       const def = `[${a.defaults.map((d) => `'${escapeXml(d)}'`).join(', ')}]`;

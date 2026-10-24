@@ -1,11 +1,38 @@
-# Gnometangle
+<p align="center">
+  <img src="docs/images/logo.svg" width="96" alt="">
+</p>
 
-Keyboard-driven window snapping for GNOME Shell, modeled on [Rectangle](https://github.com/rxhanson/Rectangle) for
-macOS. Press a shortcut and the focused window jumps to a half, third, fourth or corner of its screen, maximizes,
-centers, or moves to another monitor. Works on Wayland and X11.
+<h1 align="center">Gnometangle</h1>
+
+<p align="center">
+  Keyboard-driven window snapping for GNOME Shell, modeled on
+  <a href="https://github.com/rxhanson/Rectangle">Rectangle</a> for macOS.
+</p>
+
+<p align="center">
+  <a href="https://github.com/aaronfeingold/gnometangle/actions/workflows/ci.yml"><img src="https://github.com/aaronfeingold/gnometangle/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/aaronfeingold/gnometangle/releases/latest"><img src="https://img.shields.io/github/v/release/aaronfeingold/gnometangle" alt="Latest release"></a>
+  <img src="https://img.shields.io/badge/GNOME_Shell-45%E2%80%9350-4a86cf" alt="GNOME Shell 45–50">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/aaronfeingold/gnometangle" alt="MIT license"></a>
+</p>
+
+<p align="center">
+  <img src="docs/images/snapping.gif" width="800" alt="A window snapping to halves, corners, thirds and maximize, each step captioned with its shortcut">
+</p>
+
+Press a shortcut and the focused window jumps to a half, third, fourth or corner of its screen, maximizes, centers,
+or moves to another monitor. Works on Wayland and X11.
 
 Targets GNOME Shell 45 through 50. An end-to-end test runs on GNOME 46, 49 and 50 under Wayland in CI for every
 change, and has also passed on GNOME 48. GNOME 45 and 47 are expected to work but are not tested yet.
+
+## Top bar menu
+
+<img src="docs/images/menu.png" width="800" alt="The Gnometangle top bar menu, with the Halves group open showing each action and its shortcut">
+
+Click the icon in the top bar for every action, grouped like the preferences window, with its current shortcut.
+Choosing one snaps the window you were using, so the menu doubles as a cheat sheet while you learn the keys.
+**Customize Shortcuts…** at the bottom opens the preferences window. The icon can be hidden in the preferences.
 
 ## Shortcuts
 
@@ -40,8 +67,27 @@ Behaviour borrowed from Rectangle:
 - Moving to another display keeps a snapped window's layout and a floating window's size.
 - Make larger and make smaller keep edges that touch the screen pinned, so a left-half window grows to the right.
 
+## Customize shortcuts
+
+<img src="docs/images/prefs.png" width="480" alt="The Shortcuts page of the preferences window" align="right">
+
+Every shortcut can be changed or disabled:
+
+1. Open **Customize Shortcuts…** from the top bar menu.
+2. Select an action and press the new keys. Backspace disables it, Esc cancels.
+3. The undo button next to a shortcut, or **Reset All**, brings back the defaults.
+
+If the keys you pick are already used by another Gnometangle action, they are moved to the new one, and a notice
+says which action lost them.
+
+<br clear="right">
+
 ## Settings
 
+Open them from the top bar menu (**Customize Shortcuts…**) or with
+`gnome-extensions prefs gnometangle@aaronfeingold.github.io`.
+
+- Show the icon in the top bar (on by default).
 - Gap size between windows and around screen edges.
 - Cycle sizes on repeat (on by default).
 - Almost maximize size (90 percent by default).
@@ -81,7 +127,7 @@ terminal wins. Rebind "Last Two Thirds" (or the terminal shortcut) if you want b
 
 ### From source
 
-Requires Node.js 22 and pnpm.
+Requires Node.js 22 and pnpm. See [CONTRIBUTING.md](CONTRIBUTING.md) for the development setup.
 
 ```sh
 git clone https://github.com/aaronfeingold/gnometangle.git
@@ -89,68 +135,19 @@ cd gnometangle
 ./scripts/install.sh
 ```
 
-## Development
+## Contributing
 
-```sh
-pnpm install
-pnpm check        # lint, format check, typecheck, unit tests, build
-pnpm run pack     # build dist/ and the installable zip
-```
-
-To try changes without logging out, run a nested shell (GNOME 49 and later use `--devkit`, older releases use
-`--nested`):
-
-```sh
-./scripts/install.sh
-dbus-run-session -- gnome-shell --devkit --wayland
-```
-
-### End-to-end test
-
-`scripts/smoke-test.sh` starts a headless GNOME Shell with two virtual monitors, installs the packed zip, opens a
-real GTK window and checks snapping, cycling, restore, unmaximizing, display moves, a synthetic Ctrl+Alt+Left key
-press, the preferences window, and that GNOME's shortcuts are restored on disable. CI runs it inside Ubuntu
-containers. To run it locally with Docker:
-
-```sh
-pnpm run pack
-docker run --rm -v "$PWD:/src:ro" -w /src ubuntu:24.04 scripts/smoke-container.sh
-```
-
-### Layout
-
-```
-src/core/       Pure TypeScript with no GNOME imports: actions, geometry, cycling, monitors, accelerators.
-                Everything here is unit tested with Vitest.
-src/extension.ts  Registers keybindings and moves windows through Mutter.
-src/overrides.ts  Saves, removes and restores conflicting GNOME shortcuts.
-src/compat.ts     Window API differences between GNOME 45-48 and 49+.
-src/prefs.ts      Adwaita preferences window with a shortcut recorder.
-scripts/build.mjs Bundles with esbuild and generates the GSettings schema from src/core/actions.ts.
-```
-
-The GSettings schema is generated, so adding an action means adding one line to `src/core/actions.ts` and handling
-it in `src/core/geometry.ts`.
-
-### Contributing
-
-Pull requests are welcome. `main` only changes through pull requests that pass CI, and the maintainer reviews
-each one before it merges.
-
-### Releasing
-
-Bump `version` in `package.json` and merge that pull request. Then tag the merge commit on `main`:
-
-```sh
-git switch main && git pull && git tag v0.1.0 && git push origin v0.1.0
-```
-
-The release workflow refuses tags that aren't on `main` or don't match `package.json`. It runs the full checks,
-builds the zip and publishes it with `SHA256SUMS` and a build attestation. That zip is what gets uploaded to
-extensions.gnome.org.
+Contributions are welcome: bug reports, ideas, and pull requests. [CONTRIBUTING.md](CONTRIBUTING.md) covers the
+development setup, how the code is organized, how to add an action, and the test suites. Good places to start are
+issues labeled [good first issue](https://github.com/aaronfeingold/gnometangle/labels/good%20first%20issue) and
+[enhancement](https://github.com/aaronfeingold/gnometangle/labels/enhancement).
 
 ## Roadmap
 
+- [Move windows to a specific workspace](https://github.com/aaronfeingold/gnometangle/issues/11)
+- [Better controls for moving windows between monitors](https://github.com/aaronfeingold/gnometangle/issues/12)
+- [Warn when a shortcut can't be registered](https://github.com/aaronfeingold/gnometangle/issues/13)
+- [More Rectangle actions](https://github.com/aaronfeingold/gnometangle/issues/14): move without resizing and more
 - Drag-to-edge snap areas
 - User-defined layouts
 - Per-application rules

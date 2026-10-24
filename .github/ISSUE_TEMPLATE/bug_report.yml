@@ -1,0 +1,49 @@
+name: Bug report
+description: Something doesn't work as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: gnome
+    attributes:
+      label: GNOME Shell version
+      description: Output of `gnome-shell --version`
+      placeholder: GNOME Shell 50.6
+    validations:
+      required: true
+  - type: dropdown
+    id: session
+    attributes:
+      label: Session
+      options: [Wayland, X11]
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Gnometangle version
+      description: Output of `gnome-extensions info gnometangle@aaronfeingold.github.io`
+    validations:
+      required: true
+  - type: input
+    id: distro
+    attributes:
+      label: Distribution
+      placeholder: Fedora 44
+  - type: textarea
+    id: monitors
+    attributes:
+      label: Monitors
+      description: How many, their resolution and scale, for display-related bugs.
+  - type: textarea
+    id: log
+    attributes:
+      label: Shell log
+      description: Lines mentioning gnometangle from `journalctl --user -b -o cat /usr/bin/gnome-shell`
+      render: text

@@ -76,6 +76,7 @@ export const SETTINGS = {
   sizeStep: 'size-step',
   overrideConflicts: 'override-conflicts',
   overriddenShortcuts: 'overridden-shortcuts',
+  showIndicator: 'show-indicator',
 } as const;
 
 export const SCHEMA_ID = 'org.gnome.shell.extensions.gnometangle';

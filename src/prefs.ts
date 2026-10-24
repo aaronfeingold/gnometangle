@@ -12,8 +12,9 @@ export default class GnometanglePreferences extends ExtensionPreferences {
   override fillPreferencesWindow(window: Adw.PreferencesWindow): Promise<void> {
     const settings = this.getSettings();
     window.set_default_size(640, 720);
-    window.add(buildGeneralPage(settings));
+    // Shortcuts first: the top bar menu's "Customize Shortcuts…" opens this window.
     window.add(buildShortcutsPage(settings, window));
+    window.add(buildGeneralPage(settings));
     return Promise.resolve();
   }
 }
@@ -60,6 +61,14 @@ function buildGeneralPage(settings: Gio.Settings): Adw.PreferencesPage {
   page.add(layout);
 
   const behavior = new Adw.PreferencesGroup({ title: 'Behavior' });
+  behavior.add(
+    switchRow(
+      settings,
+      SETTINGS.showIndicator,
+      'Show Icon in Top Bar',
+      'A menu that lists every action with its shortcut, and runs it on click',
+    ),
+  );
   behavior.add(
     switchRow(
       settings,
