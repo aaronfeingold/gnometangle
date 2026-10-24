@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { acceleratorSet, normalizeAccelerator, withoutConflicts } from '../src/core/accelerators.js';
+import { acceleratorLabel, acceleratorSet, normalizeAccelerator, withoutConflicts } from '../src/core/accelerators.js';
 import { ACTIONS } from '../src/core/actions.js';
 
 describe('normalizeAccelerator', () => {
@@ -44,5 +44,30 @@ describe('default shortcuts', () => {
     const ids = ACTIONS.map((a) => a.id);
     expect(new Set(ids).size).toBe(ids.length);
     for (const id of ids) expect(id).toMatch(/^[a-z][a-z0-9-]{0,31}$/);
+  });
+});
+
+describe('acceleratorLabel', () => {
+  it('formats modifiers in README order with readable key names', () => {
+    expect(acceleratorLabel('<Control><Alt>Left')).toBe('Ctrl+Alt+←');
+    expect(acceleratorLabel('<Alt><Control>Return')).toBe('Ctrl+Alt+Enter');
+    expect(acceleratorLabel('<Control><Alt><Shift>Up')).toBe('Ctrl+Alt+Shift+↑');
+    expect(acceleratorLabel('<Control><Alt><Super>Right')).toBe('Ctrl+Alt+Super+→');
+    expect(acceleratorLabel('<Control><Alt>minus')).toBe('Ctrl+Alt+-');
+    expect(acceleratorLabel('<Control><Alt>BackSpace')).toBe('Ctrl+Alt+Backspace');
+  });
+
+  it('uppercases letters and capitalizes other key names', () => {
+    expect(acceleratorLabel('<Control><Alt>u')).toBe('Ctrl+Alt+U');
+    expect(acceleratorLabel('<Super>F5')).toBe('Super+F5');
+  });
+
+  it('returns an empty label for invalid accelerators', () => {
+    expect(acceleratorLabel('')).toBe('');
+    expect(acceleratorLabel('<Bogus>a')).toBe('');
+  });
+
+  it('labels every default shortcut', () => {
+    for (const accel of ACTIONS.flatMap((a) => [...a.defaults])) expect(acceleratorLabel(accel)).not.toBe('');
   });
 });

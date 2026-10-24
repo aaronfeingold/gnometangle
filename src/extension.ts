@@ -1,4 +1,4 @@
-import type Gio from 'gi://Gio';
+import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
@@ -13,6 +13,7 @@ import { nextHistory, type WindowHistory } from './core/cycle.js';
 import { computeTarget, mapToWorkArea, moveToWorkArea, rectsClose } from './core/geometry.js';
 import { neighborMonitor } from './core/monitors.js';
 import type { Rect } from './core/types.js';
+import { Indicator } from './indicator.js';
 import { applyOverrides, hasPendingOverrides, restoreOverrides } from './overrides.js';
 
 const SNAPPABLE_TYPES = new Set([Meta.WindowType.NORMAL, Meta.WindowType.DIALOG, Meta.WindowType.MODAL_DIALOG]);
@@ -29,6 +30,7 @@ export default class GnometangleExtension extends Extension {
   private history = new WeakMap<Meta.Window, WindowHistory>();
   private settingsHandlers: number[] = [];
   private idleSources = new Set<number>();
+  private indicator: Indicator | null = null;
 
   override enable(): void {
     this.settings = this.getSettings();
@@ -48,10 +50,14 @@ export default class GnometangleExtension extends Extension {
     this.settingsHandlers = [
       this.settings.connect(`changed::${SETTINGS.overrideConflicts}`, resync),
       ...ACTIONS.map((action) => this.settings!.connect(`changed::${action.id}`, resync)),
+      this.settings.connect(`changed::${SETTINGS.showIndicator}`, () => this.syncIndicator()),
     ];
+    this.syncIndicator();
   }
 
   override disable(): void {
+    this.indicator?.destroy();
+    this.indicator = null;
     for (const action of ACTIONS) Main.wm.removeKeybinding(action.id);
     for (const id of this.idleSources) GLib.source_remove(id);
     this.idleSources.clear();
@@ -62,6 +68,21 @@ export default class GnometangleExtension extends Extension {
     this.settingsHandlers = [];
     this.settings = null;
     this.history = new WeakMap();
+  }
+
+  private syncIndicator(): void {
+    const show = this.settings?.get_boolean(SETTINGS.showIndicator) ?? false;
+    if (show && !this.indicator) {
+      const icon = Gio.icon_new_for_string(`${this.path}/icons/gnometangle-symbolic.svg`);
+      this.indicator = new Indicator(this.settings!, icon, {
+        run: (action, win) => this.run(action, win),
+        openPreferences: () => this.openPreferences(),
+      });
+      Main.panel.addToStatusArea(this.uuid, this.indicator);
+    } else if (!show && this.indicator) {
+      this.indicator.destroy();
+      this.indicator = null;
+    }
   }
 
   private syncOverrides(): void {
@@ -77,10 +98,10 @@ export default class GnometangleExtension extends Extension {
     this.syncOverrides();
   }
 
-  private run(action: ActionId): void {
+  /** Runs an action on `win`, or on the focused window when called from a shortcut. */
+  run(action: ActionId, win: Meta.Window | null = global.display.get_focus_window()): void {
     const settings = this.settings;
-    const win = global.display.get_focus_window();
-    if (!settings || !win || !SNAPPABLE_TYPES.has(win.get_window_type())) return;
+    if (!settings || !win || !win.get_compositor_private() || !SNAPPABLE_TYPES.has(win.get_window_type())) return;
 
     if (action === 'restore') {
       this.restore(win);

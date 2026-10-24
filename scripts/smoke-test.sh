@@ -172,6 +172,24 @@ check "Ctrl+Alt+Enter key press" "$wx,$wy,$ww,$wh" "$(ev "$FRAME")"
 ev "$EXT.stateObj.run('restore')" >/dev/null
 sleep 0.4
 
+# Top bar menu: one submenu per group, then a separator and "Customize Shortcuts…".
+IND="Main.panel.statusArea['$UUID']"
+check "top bar icon shown" "true" "$(ev "!!$IND")"
+check "top bar menu items" "8" "$(ev "$IND.menu._getMenuItems().length")"
+check "menu shows the shortcut" "Left Half Ctrl+Alt+Left" \
+  "$(ev "(() => { const i = $IND.menu._getMenuItems()[0].menu._getMenuItems()[0];
+    return i.label.text + ' ' + i.get_children().filter(c => c instanceof imports.gi.St.Label).pop().text.replace('←', 'Left'); })()")"
+ev "$EXT.stateObj.run('center')" >/dev/null
+ev "(() => { $IND.menu.open(); $IND.menu._getMenuItems()[0].menu._getMenuItems()[0].activate(null); return 1; })()" >/dev/null
+sleep 0.4
+check "menu item snaps the window" "$wx,$wy,$half,$wh" "$(ev "$FRAME")"
+check "menu closes after choosing" "false" "$(ev "$IND.menu.isOpen")"
+ev "$EXT.stateObj.run('restore')" >/dev/null
+ev "$EXT.stateObj.settings.set_boolean('show-indicator', false)" >/dev/null
+check "top bar icon can be hidden" "false" "$(ev "!!$IND")"
+ev "$EXT.stateObj.settings.set_boolean('show-indicator', true)" >/dev/null
+sleep 0.4
+
 ev "$EXT.stateObj.run('next-display')" >/dev/null
 sleep 0.4
 check "next display" "1" "$(ev "global.display.get_focus_window().get_monitor()")"

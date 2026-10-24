@@ -1,0 +1,6 @@
+/* Shortcut shown at the right edge of each action in the top bar menu. */
+.gnometangle-shortcut {
+  margin-left: 2em;
+  font-feature-settings: 'tnum';
+  opacity: 0.6;
+}
