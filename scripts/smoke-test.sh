@@ -92,6 +92,11 @@ check "every shortcut registered" "" "$(ev "(() => {
     .filter(k => s.get_value(k).get_type_string() === 'as' && !(k in Main.wm._allowedKeybindings))
     .join(',');
 })()")"
+check "GNOME shortcuts untouched by default" "$original_shortcuts" \
+  "$(ev "$KB.get_strv('switch-to-workspace-left').join('|')")"
+# The rest of the run presses the default keys, so turn on the overrides that free them.
+ev "$EXT.stateObj.settings.set_boolean('override-conflicts', true)" >/dev/null
+sleep 0.5
 check "conflicting GNOME shortcut removed" "${original_shortcuts//|<Control><Alt>Left/}" \
   "$(ev "$KB.get_strv('switch-to-workspace-left').join('|')")"
 

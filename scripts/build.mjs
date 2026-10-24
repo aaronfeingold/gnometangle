@@ -80,7 +80,7 @@ function schemaXml({ ACTIONS, SETTINGS, SCHEMA_ID, SCHEMA_PATH }) {
     intKey(SETTINGS.almostMaximizePercent, 90, 50, 100, 'Almost Maximize size as a percent of the work area'),
     intKey(SETTINGS.sizeStep, 30, 5, 200, 'Pixels added or removed per side by Make Larger and Make Smaller'),
     boolKey(SETTINGS.cycleSizes, true, 'Cycle through 1/2, 2/3 and 1/3 when a shortcut is repeated'),
-    boolKey(SETTINGS.overrideConflicts, true, 'Temporarily remove GNOME shortcuts that conflict with ours'),
+    boolKey(SETTINGS.overrideConflicts, false, 'Temporarily remove GNOME shortcuts that conflict with ours'),
     boolKey(SETTINGS.showIndicator, true, 'Show the Gnometangle menu in the top bar'),
     `    <key name="${SETTINGS.overriddenShortcuts}" type="s">\n      <default>''</default>\n      <summary>Internal: original GNOME shortcuts saved while overridden (JSON)</summary>\n    </key>`,
     ...ACTIONS.map((a) => {

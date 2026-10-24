@@ -6,6 +6,7 @@ import Gio from 'gi://Gio';
 
 import { withoutConflicts } from './core/accelerators.js';
 import { SETTINGS } from './core/actions.js';
+import { parseSavedOverrides, restoreSaved, type SavedOverrides } from './core/overrides.js';
 
 /** GNOME schemas whose string-array keys are keyboard shortcuts. */
 const SHORTCUT_SCHEMAS = [
@@ -15,38 +16,26 @@ const SHORTCUT_SCHEMAS = [
   'org.gnome.shell.keybindings',
 ];
 
-type Saved = Record<string, Record<string, string[]>>;
-
 function lookupSettings(schemaId: string): Gio.Settings | null {
   const source = Gio.SettingsSchemaSource.get_default();
   const schema = source?.lookup(schemaId, true);
   return schema ? new Gio.Settings({ settings_schema: schema }) : null;
 }
 
-function readSaved(settings: Gio.Settings): Saved {
-  try {
-    const raw = settings.get_string(SETTINGS.overriddenShortcuts);
-    return raw ? (JSON.parse(raw) as Saved) : {};
-  } catch {
-    return {};
-  }
+function readSaved(settings: Gio.Settings): SavedOverrides {
+  return parseSavedOverrides(settings.get_string(SETTINGS.overriddenShortcuts));
 }
 
-/** Puts back every GNOME shortcut we removed, then forgets them. */
+/** Puts back every GNOME shortcut we removed that the user hasn't changed since, then forgets them. */
 export function restoreOverrides(settings: Gio.Settings): void {
-  const saved = readSaved(settings);
-  for (const [schemaId, keys] of Object.entries(saved)) {
-    const gnome = lookupSettings(schemaId);
-    if (!gnome) continue;
-    for (const [key, value] of Object.entries(keys)) gnome.set_strv(key, value);
-  }
+  restoreSaved(readSaved(settings), lookupSettings);
   settings.set_string(SETTINGS.overriddenShortcuts, '');
   Gio.Settings.sync();
 }
 
 /** Removes GNOME shortcuts that use any accelerator in `taken`, remembering the originals. */
 export function applyOverrides(settings: Gio.Settings, taken: ReadonlySet<string>): void {
-  const saved: Saved = {};
+  const saved: SavedOverrides = {};
   const changes: Array<[Gio.Settings, string, string[]]> = [];
 
   for (const schemaId of SHORTCUT_SCHEMAS) {
@@ -58,7 +47,7 @@ export function applyOverrides(settings: Gio.Settings, taken: ReadonlySet<string
       const current = value.deepUnpack<string[]>();
       const filtered = withoutConflicts(current, taken);
       if (filtered.length === current.length) continue;
-      (saved[schemaId] ??= {})[key] = current;
+      (saved[schemaId] ??= {})[key] = { original: current, applied: filtered };
       changes.push([gnome, key, filtered]);
     }
   }
