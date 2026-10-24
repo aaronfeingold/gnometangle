@@ -92,15 +92,33 @@ Open them from the top bar menu (**Customize Shortcuts…**) or with
 - Cycle sizes on repeat (on by default).
 - Almost maximize size (90 percent by default).
 - Resize step for make larger and make smaller.
-- Override conflicting GNOME shortcuts (on by default), described below.
+- Opinionated overrides (off by default), described below.
 
-## Conflicts with GNOME shortcuts
+## Opinionated overrides
 
-GNOME binds Ctrl+Alt+Arrow keys to workspace switching, and Ctrl+Alt+Shift+Up to moving a window up a workspace.
-With **Override conflicting GNOME shortcuts** on, the extension removes only the GNOME entries that use the same keys
-as its own shortcuts while it is enabled, and puts them back when it is disabled. Other keys on those GNOME actions
-(such as Super+Page Up) keep working. The originals are saved before anything changes, so they are also restored on
-the next start if the shell ever exits without disabling the extension.
+Some of Gnometangle's default shortcuts are also GNOME shortcuts. Gnometangle doesn't change your GNOME shortcuts
+unless you ask it to, so with the defaults both claim these keys and only one of the two actions runs:
+
+| Keys                  | GNOME action                     | Gnometangle action |
+| --------------------- | -------------------------------- | ------------------ |
+| Ctrl+Alt+Left / Right | Switch to workspace left / right | Left / Right half  |
+| Ctrl+Alt+Up / Down    | Switch to workspace up / down    | Top / Bottom half  |
+| Ctrl+Alt+Shift+Up     | Move window one workspace up     | Maximize height    |
+
+To let Gnometangle have them, turn on **Opinionated Overrides** in the **General** page of the preferences, or run:
+
+```sh
+gsettings --schemadir ~/.local/share/gnome-shell/extensions/gnometangle@aaronfeingold.github.io/schemas \
+  set org.gnome.shell.extensions.gnometangle override-conflicts true
+```
+
+It takes effect right away, with no logout needed. While it is on, the extension removes only the GNOME entries that
+use the same keys as its own shortcuts, including any you set yourself. Other keys on those GNOME actions (such as
+Super+Page Up) keep working. Turning it off, or disabling the extension, puts them back, except for any of those GNOME
+shortcuts you changed yourself in the meantime, which keep your change. The originals are saved before anything
+changes, so they are also restored on the next start if the shell ever exits without disabling the extension.
+
+The other way around works too: leave it off and give the Gnometangle actions different keys in the preferences.
 
 On Ubuntu, Ctrl+Alt+T opens a terminal. That binding lives in a different place and is not overridden, so the
 terminal wins. Rebind "Last Two Thirds" (or the terminal shortcut) if you want both.
