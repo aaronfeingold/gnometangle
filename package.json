@@ -1,6 +1,6 @@
 {
   "name": "gnometangle",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Rectangle-style keyboard window snapping for GNOME Shell",
   "license": "MIT",

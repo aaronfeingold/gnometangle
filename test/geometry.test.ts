@@ -106,7 +106,7 @@ describe('thirds and fourths', () => {
 
 describe('size and position', () => {
   it('maximizes to the work area', () => {
-    expect(target('maximize')).toEqual(WA);
+    expect(target('maximize-window')).toEqual(WA);
   });
 
   it('almost maximizes centered at the configured ratio', () => {

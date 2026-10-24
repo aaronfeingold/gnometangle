@@ -87,7 +87,7 @@ export function regionFor(action: ActionId, workArea: Rect, repeat: number, cycl
       return segment(workArea, span(0.125, 0.875));
     case 'last-three-fourths':
       return segment(workArea, span(0.25, 1));
-    case 'maximize':
+    case 'maximize-window':
       return FULL;
     default:
       return null;
