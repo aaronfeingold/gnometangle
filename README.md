@@ -189,10 +189,6 @@ issues labeled [good first issue](https://github.com/aaronfeingold/gnometangle/l
 
 ## Roadmap
 
-- [Move windows to a specific workspace](https://github.com/aaronfeingold/gnometangle/issues/11)
-- [Better controls for moving windows between monitors](https://github.com/aaronfeingold/gnometangle/issues/12)
-- [Warn when a shortcut can't be registered](https://github.com/aaronfeingold/gnometangle/issues/13)
-- [More Rectangle actions](https://github.com/aaronfeingold/gnometangle/issues/14): move without resizing and more
 - Drag-to-edge snap areas
 - User-defined layouts
 - Per-application rules
