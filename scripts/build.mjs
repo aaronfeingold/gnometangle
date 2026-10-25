@@ -3,18 +3,22 @@
 //   schemas/*.gschema.xml    generated from src/core/actions.ts
 //   metadata.json            with version-name taken from package.json
 //   stylesheet.css, icons/   copied from src/
+//   locale/                  compiled from po/*.po
 // Flags:
 //   --zip      also write <uuid>.shell-extension.zip in the repo root
 //   --compile  also compile schemas in dist/ (needed for manual installs on GNOME 45)
 
 import { execFileSync } from 'node:child_process';
-import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import * as esbuild from 'esbuild';
 
+import { loadActions } from './load-actions.mjs';
+
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const GETTEXT_DOMAIN = JSON.parse(readFileSync(join(root, 'metadata.json'), 'utf8'))['gettext-domain'];
 const dist = join(root, 'dist');
 const args = new Set(process.argv.slice(2));
 
@@ -34,17 +38,18 @@ await esbuild.build({
 });
 
 // Evaluate the action list to generate the schema, so keys and defaults never drift.
-const actionsBundle = await esbuild.build({
-  entryPoints: [join(root, 'src/core/actions.ts')],
-  bundle: true,
-  format: 'esm',
-  write: false,
-  platform: 'neutral',
-});
-const actionsModule = await import(
-  `data:text/javascript;base64,${Buffer.from(actionsBundle.outputFiles[0].text).toString('base64')}`
-);
+const actionsModule = await loadActions(root);
 writeFileSync(join(dist, 'schemas', `${actionsModule.SCHEMA_ID}.gschema.xml`), schemaXml(actionsModule));
+
+// Compiled translations, one po/<lang>.po per language.
+const poDir = join(root, 'po');
+for (const file of existsSync(poDir) ? readdirSync(poDir).filter((f) => f.endsWith('.po')) : []) {
+  const out = join(dist, 'locale', basename(file, '.po'), 'LC_MESSAGES');
+  mkdirSync(out, { recursive: true });
+  execFileSync('msgfmt', ['--check', '-o', join(out, `${GETTEXT_DOMAIN}.mo`), join(poDir, file)], {
+    stdio: 'inherit',
+  });
+}
 
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
 const metadata = JSON.parse(readFileSync(join(root, 'metadata.json'), 'utf8'));

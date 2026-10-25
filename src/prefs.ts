@@ -3,7 +3,7 @@ import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
 import Gtk from 'gi://Gtk';
 
-import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
+import { ExtensionPreferences, gettext as _ } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 import { releaseAccelerator } from './core/accelerators.js';
 import { ACTIONS, GROUP_LABELS, SETTINGS, type ActionDef, type ActionGroup } from './core/actions.js';
@@ -34,16 +34,16 @@ function switchRow(settings: Gio.Settings, key: string, title: string, subtitle:
 }
 
 function buildGeneralPage(settings: Gio.Settings): Adw.PreferencesPage {
-  const page = new Adw.PreferencesPage({ title: 'General', icon_name: 'preferences-system-symbolic' });
+  const page = new Adw.PreferencesPage({ title: _('General'), icon_name: 'preferences-system-symbolic' });
 
-  const layout = new Adw.PreferencesGroup({ title: 'Layout' });
-  layout.add(spinRow(settings, SETTINGS.gapSize, 'Gap Size', 'Pixels between windows and screen edges', 0, 64));
+  const layout = new Adw.PreferencesGroup({ title: _('Layout') });
+  layout.add(spinRow(settings, SETTINGS.gapSize, _('Gap Size'), _('Pixels between windows and screen edges'), 0, 64));
   layout.add(
     spinRow(
       settings,
       SETTINGS.almostMaximizePercent,
-      'Almost Maximize Size',
-      'Percent of the screen used by Almost Maximize',
+      _('Almost Maximize Size'),
+      _('Percent of the screen used by Almost Maximize'),
       50,
       100,
     ),
@@ -52,37 +52,39 @@ function buildGeneralPage(settings: Gio.Settings): Adw.PreferencesPage {
     spinRow(
       settings,
       SETTINGS.sizeStep,
-      'Resize Step',
-      'Pixels added or removed by Make Larger and Make Smaller',
+      _('Resize Step'),
+      _('Pixels added or removed by Make Larger and Make Smaller'),
       5,
       200,
     ),
   );
   page.add(layout);
 
-  const behavior = new Adw.PreferencesGroup({ title: 'Behavior' });
+  const behavior = new Adw.PreferencesGroup({ title: _('Behavior') });
   behavior.add(
     switchRow(
       settings,
       SETTINGS.showIndicator,
-      'Show Icon in Top Bar',
-      'A menu that lists every action with its shortcut, and runs it on click',
+      _('Show Icon in Top Bar'),
+      _('A menu that lists every action with its shortcut, and runs it on click'),
     ),
   );
   behavior.add(
     switchRow(
       settings,
       SETTINGS.cycleSizes,
-      'Cycle Sizes on Repeat',
-      'Pressing a half shortcut again cycles through 1/2, 2/3 and 1/3',
+      _('Cycle Sizes on Repeat'),
+      _('Pressing a half shortcut again cycles through 1/2, 2/3 and 1/3'),
     ),
   );
   behavior.add(
     switchRow(
       settings,
       SETTINGS.overrideConflicts,
-      'Opinionated Overrides',
-      'Removes the GNOME shortcuts that use the same keys as Gnometangle, such as Ctrl+Alt+Arrow for switching workspaces and Ctrl+Alt+Shift+Up for moving a window up a workspace. Turning this off puts them back.',
+      _('Opinionated Overrides'),
+      _(
+        'Removes the GNOME shortcuts that use the same keys as Gnometangle, such as Ctrl+Alt+Arrow for switching workspaces and Ctrl+Alt+Shift+Up for moving a window up a workspace. Turning this off puts them back.',
+      ),
     ),
   );
   page.add(behavior);
@@ -91,12 +93,12 @@ function buildGeneralPage(settings: Gio.Settings): Adw.PreferencesPage {
 }
 
 function buildShortcutsPage(settings: Gio.Settings, window: Adw.PreferencesWindow): Adw.PreferencesPage {
-  const page = new Adw.PreferencesPage({ title: 'Shortcuts', icon_name: 'input-keyboard-symbolic' });
+  const page = new Adw.PreferencesPage({ title: _('Shortcuts'), icon_name: 'input-keyboard-symbolic' });
 
   const top = new Adw.PreferencesGroup({
-    description: 'Select a shortcut to change it. Press Backspace in the dialog to disable it.',
+    description: _('Select a shortcut to change it. Press Backspace in the dialog to disable it.'),
   });
-  const resetAll = new Gtk.Button({ label: 'Reset All', valign: Gtk.Align.CENTER });
+  const resetAll = new Gtk.Button({ label: _('Reset All'), valign: Gtk.Align.CENTER });
   resetAll.connect('clicked', () => {
     for (const action of ACTIONS) settings.reset(action.id);
   });
@@ -107,7 +109,7 @@ function buildShortcutsPage(settings: Gio.Settings, window: Adw.PreferencesWindo
   for (const action of ACTIONS) {
     let group = groups.get(action.group);
     if (!group) {
-      group = new Adw.PreferencesGroup({ title: GROUP_LABELS[action.group] });
+      group = new Adw.PreferencesGroup({ title: _(GROUP_LABELS[action.group]) });
       groups.set(action.group, group);
       page.add(group);
     }
@@ -117,11 +119,11 @@ function buildShortcutsPage(settings: Gio.Settings, window: Adw.PreferencesWindo
 }
 
 function shortcutRow(settings: Gio.Settings, action: ActionDef, window: Adw.PreferencesWindow): Adw.ActionRow {
-  const row = new Adw.ActionRow({ title: action.label, activatable: true });
-  const label = new Gtk.ShortcutLabel({ disabled_text: 'Disabled', valign: Gtk.Align.CENTER });
+  const row = new Adw.ActionRow({ title: _(action.label), activatable: true });
+  const label = new Gtk.ShortcutLabel({ disabled_text: _('Disabled'), valign: Gtk.Align.CENTER });
   const reset = new Gtk.Button({
     icon_name: 'edit-undo-symbolic',
-    tooltip_text: 'Reset to default',
+    tooltip_text: _('Reset to default'),
     valign: Gtk.Align.CENTER,
     css_classes: ['flat'],
   });
@@ -144,7 +146,7 @@ function shortcutRow(settings: Gio.Settings, action: ActionDef, window: Adw.Pref
 
 function captureShortcut(settings: Gio.Settings, action: ActionDef, window: Adw.PreferencesWindow): void {
   const dialog = new Gtk.Window({
-    title: 'Set Shortcut',
+    title: _('Set Shortcut'),
     modal: true,
     transient_for: window,
     resizable: false,
@@ -158,8 +160,12 @@ function captureShortcut(settings: Gio.Settings, action: ActionDef, window: Adw.
     margin_start: 24,
     margin_end: 24,
   });
-  box.append(new Gtk.Label({ label: `Press a new shortcut for ${action.label}`, css_classes: ['title-3'] }));
-  box.append(new Gtk.Label({ label: 'Esc to cancel, Backspace to disable', css_classes: ['dim-label'], wrap: true }));
+  // Translators: %s is an action name, such as "Left Half".
+  const prompt = _('Press a new shortcut for %s').replace('%s', _(action.label));
+  box.append(new Gtk.Label({ label: prompt, css_classes: ['title-3'] }));
+  box.append(
+    new Gtk.Label({ label: _('Esc to cancel, Backspace to disable'), css_classes: ['dim-label'], wrap: true }),
+  );
   dialog.set_child(box);
 
   const controller = new Gtk.EventControllerKey();
@@ -185,8 +191,9 @@ function captureShortcut(settings: Gio.Settings, action: ActionDef, window: Adw.
       const shortcuts = new Map(ACTIONS.map((a) => [a.id, settings.get_strv(a.id)]));
       for (const [id, kept] of releaseAccelerator(shortcuts, action.id, accel)) {
         settings.set_strv(id, kept);
-        const label = ACTIONS.find((a) => a.id === id)!.label;
-        window.add_toast(new Adw.Toast({ title: `Removed the same shortcut from ${label}` }));
+        const label = _(ACTIONS.find((a) => a.id === id)!.label);
+        // Translators: %s is an action name, such as "Left Half".
+        window.add_toast(new Adw.Toast({ title: _('Removed the same shortcut from %s').replace('%s', label) }));
       }
       settings.set_strv(action.id, [accel]);
       dialog.close();
