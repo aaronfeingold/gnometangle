@@ -311,19 +311,20 @@ apply_monitors() {
 apply_monitors "[(0, 0, 2.0, uint32 0, true, [('Meta-0', '1920x1080@60.000', @a{sv} {})]), (960, 0, 1.0, uint32 0, false, [('Meta-1', '1280x1024@60.000', @a{sv} {})])]"
 check "mixed scale monitors" "960x540@2 1280x1024@1" "$(ev "[0, 1].map(i => { const g = global.display.get_monitor_geometry(i); return g.width + 'x' + g.height + '@' + global.display.get_monitor_scale(i); }).join(' ')")"
 LEFT_HALF_OF="(() => { const a = $SMOKE.get_work_area_for_monitor(MON); return [a.x, a.y, Math.round(a.width / 2), a.height].join(','); })()"
-# Shrinking monitor 0 can leave the window on monitor 1, so start it on monitor 0 explicitly.
-ev "$SMOKE.move_to_monitor(0); $SMOKE.activate(global.get_current_time())" >/dev/null
-sleep 0.5
-check "window starts on the 2x display" "0" "$(ev "$SMOKE.get_monitor()")"
+# Shrinking monitor 0 can leave the window on either monitor (it differs between GNOME releases), so
+# check relative to where it is: snapped there, kept exactly on the other display, and back again.
+ev "$SMOKE.activate(global.get_current_time())" >/dev/null
+here=$(ev "$SMOKE.get_monitor()")
+there=$((1 - here))
 ev "$EXT.stateObj.run('left-half', $SMOKE)" >/dev/null
 sleep 0.5
-check "left half at 2x" "$(ev "${LEFT_HALF_OF/MON/0}")" "$(ev "$SMOKE_FRAME_EXPR")"
+check "left half on display $here" "$(ev "${LEFT_HALF_OF/MON/$here}")" "$(ev "$SMOKE_FRAME_EXPR")"
 ev "$EXT.stateObj.run('next-display', $SMOKE)" >/dev/null
 sleep 1
-check "left half kept on the 1x display" "$(ev "${LEFT_HALF_OF/MON/1}")" "$(ev "$SMOKE_FRAME_EXPR")"
+check "left half kept on display $there" "$(ev "${LEFT_HALF_OF/MON/$there}")" "$(ev "$SMOKE_FRAME_EXPR")"
 ev "$EXT.stateObj.run('previous-display', $SMOKE)" >/dev/null
 sleep 1
-check "left half kept back on the 2x display" "$(ev "${LEFT_HALF_OF/MON/0}")" "$(ev "$SMOKE_FRAME_EXPR")"
+check "left half kept back on display $here" "$(ev "${LEFT_HALF_OF/MON/$here}")" "$(ev "$SMOKE_FRAME_EXPR")"
 apply_monitors "[(0, 0, 1.0, uint32 0, true, [('Meta-0', '1920x1080@60.000', @a{sv} {})]), (1920, 0, 1.0, uint32 0, false, [('Meta-1', '1280x1024@60.000', @a{sv} {})])]"
 ev "$EXT.stateObj.run('restore', $SMOKE)" >/dev/null
 sleep 0.4
