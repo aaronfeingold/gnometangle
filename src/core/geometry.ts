@@ -21,6 +21,12 @@ export interface GeometryContext extends GeometryOptions {
 /** Smallest size Make Smaller will shrink to, as a fraction of the work area. */
 export const MIN_SIZE_RATIO = 0.25;
 
+/** Pixels a window may land from the frame we asked for and still count as snapped: terminals round to whole cells. */
+export const SNAP_TOLERANCE = 40;
+
+/** Pixels an edge may sit from the work area's edge and still stay pinned on resize, to absorb rounding. */
+export const EDGE_TOLERANCE = 2;
+
 /** Returns the region an action targets, or null when the action is not region based. */
 export function regionFor(action: ActionId, workArea: Rect, repeat: number, cycle = true): Region | null {
   const behavior = behaviorOf(action);
@@ -95,11 +101,10 @@ function resizeAxis(
   delta: number,
   minSize: number,
 ): [number, number] {
-  const tolerance = 2;
   const end = start + size;
   const areaEnd = areaStart + areaSize;
-  const touchesStart = Math.abs(start - areaStart) <= tolerance;
-  const touchesEnd = Math.abs(end - areaEnd) <= tolerance;
+  const touchesStart = Math.abs(start - areaStart) <= EDGE_TOLERANCE;
+  const touchesEnd = Math.abs(end - areaEnd) <= EDGE_TOLERANCE;
   const newSize = clamp(size + 2 * delta, Math.min(minSize, size), areaSize);
   const change = newSize - size;
   let newStart: number;
@@ -201,7 +206,7 @@ export function computeTarget(action: ActionId, ctx: GeometryContext, cycle = tr
 }
 
 /** True when every edge of `a` is within `tolerance` pixels of the same edge of `b`. */
-export function rectsClose(a: Rect, b: Rect, tolerance = 40): boolean {
+export function rectsClose(a: Rect, b: Rect, tolerance = SNAP_TOLERANCE): boolean {
   return (
     Math.abs(a.x - b.x) <= tolerance &&
     Math.abs(a.y - b.y) <= tolerance &&
