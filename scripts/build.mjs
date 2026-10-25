@@ -87,6 +87,7 @@ function schemaXml({ ACTIONS, SETTINGS, SCHEMA_ID, SCHEMA_PATH }) {
     boolKey(SETTINGS.cycleSizes, true, 'Cycle through 1/2, 2/3 and 1/3 when a shortcut is repeated'),
     boolKey(SETTINGS.overrideConflicts, false, 'Temporarily remove GNOME shortcuts that conflict with ours'),
     boolKey(SETTINGS.showIndicator, true, 'Show the Gnometangle menu in the top bar'),
+    boolKey(SETTINGS.workspaceFollow, true, 'Switch to the workspace a window is sent to'),
     `    <key name="${SETTINGS.ignoredApps}" type="as">\n      <default>[]</default>\n      <summary>App ids (desktop file names) whose windows Gnometangle's shortcuts leave alone</summary>\n    </key>`,
     `    <key name="${SETTINGS.unregisteredShortcuts}" type="as">\n      <default>[]</default>\n      <summary>Internal: actions whose keybinding Mutter refused, shown as warnings in the preferences</summary>\n    </key>`,
     `    <key name="${SETTINGS.overriddenShortcuts}" type="s">\n      <default>''</default>\n      <summary>Internal: original GNOME shortcuts saved while overridden (JSON)</summary>\n    </key>`,

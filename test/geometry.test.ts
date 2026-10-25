@@ -144,12 +144,24 @@ describe('size and position', () => {
     expect(r.height).toBe(262);
   });
 
+  // Restore, display and workspace moves need window history or other monitors and workspaces.
+  const outside = [
+    'restore',
+    'next-display',
+    'previous-display',
+    'send-to-workspace-1',
+    'send-to-workspace-9',
+    'send-to-next-workspace',
+    'send-to-previous-workspace',
+  ] as const;
+
   it('returns null for actions handled outside geometry', () => {
-    for (const id of ['restore', 'next-display', 'previous-display'] as const) expect(target(id)).toBeNull();
+    for (const id of outside) expect(target(id)).toBeNull();
   });
 
   it('handles every non-history action', () => {
-    const handled = ACTIONS.filter((a) => !['restore', 'next-display', 'previous-display'].includes(a.id));
+    const handled = ACTIONS.filter((a) => !['restore', 'display', 'workspace'].includes(a.behavior.kind));
+    expect(handled.length).toBe(ACTIONS.length - 14);
     for (const a of handled) expect(target(a.id), a.id).not.toBeNull();
   });
 });
