@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
+import { acceleratorSet } from '../src/core/accelerators.js';
 import {
   parseSavedOverrides,
+  planOverrides,
   restoreSaved,
   restoredValue,
   type SavedOverrides,
@@ -90,5 +92,66 @@ describe('parseSavedOverrides', () => {
     expect(parseSavedOverrides('not json')).toEqual({});
     expect(parseSavedOverrides('[1]')).toEqual({});
     expect(parseSavedOverrides(JSON.stringify({ [WM]: { key: [1], other: { original: 'a' } } }))).toEqual({});
+  });
+});
+
+describe('planOverrides', () => {
+  const taken = acceleratorSet(['<Control><Alt>Left', '<Control><Alt>Right']);
+  const left = ['<Super>Page_Up', '<Control><Alt>Left'];
+  const right = ['<Super>Page_Down', '<Control><Alt>Right'];
+  const keys = (values: Record<string, string[]>) =>
+    Object.entries(values).map(([key, current]) => ({ schemaId: WM, key, current }));
+
+  it('removes conflicts and saves the originals', () => {
+    const plan = planOverrides(keys({ left, right, other: ['<Super>x'] }), {}, taken);
+    expect(plan.writes).toEqual([
+      { schemaId: WM, key: 'left', value: ['<Super>Page_Up'] },
+      { schemaId: WM, key: 'right', value: ['<Super>Page_Down'] },
+    ]);
+    expect(plan.saved).toEqual({
+      [WM]: {
+        left: { original: left, applied: ['<Super>Page_Up'] },
+        right: { original: right, applied: ['<Super>Page_Down'] },
+      },
+    });
+  });
+
+  it('writes nothing when the overrides are already in place', () => {
+    const first = planOverrides(keys({ left, right }), {}, taken);
+    const again = planOverrides(keys({ left: ['<Super>Page_Up'], right: ['<Super>Page_Down'] }), first.saved, taken);
+    expect(again.writes).toEqual([]);
+    expect(again.saved).toEqual(first.saved);
+  });
+
+  it('only touches the key whose conflict went away', () => {
+    const first = planOverrides(keys({ left, right }), {}, taken);
+    const rightOnly = acceleratorSet(['<Control><Alt>Right']);
+    const plan = planOverrides(keys({ left: ['<Super>Page_Up'], right: ['<Super>Page_Down'] }), first.saved, rightOnly);
+    expect(plan.writes).toEqual([{ schemaId: WM, key: 'left', value: left }]);
+    expect(plan.saved).toEqual({ [WM]: { right: first.saved[WM]!.right } });
+  });
+
+  it('gives everything back for an empty set', () => {
+    const first = planOverrides(keys({ left, right }), {}, taken);
+    const plan = planOverrides(keys({ left: ['<Super>Page_Up'], right: ['<Super>Page_Down'] }), first.saved, new Set());
+    expect(plan.writes).toEqual([
+      { schemaId: WM, key: 'left', value: left },
+      { schemaId: WM, key: 'right', value: right },
+    ]);
+    expect(plan.saved).toEqual({});
+  });
+
+  it('treats a key the user changed as their new original', () => {
+    const first = planOverrides(keys({ left }), {}, taken);
+    const changed = ['<Super>Home', '<Control><Alt>Left'];
+    const plan = planOverrides(keys({ left: changed }), first.saved, taken);
+    expect(plan.writes).toEqual([{ schemaId: WM, key: 'left', value: ['<Super>Home'] }]);
+    expect(plan.saved).toEqual({ [WM]: { left: { original: changed, applied: ['<Super>Home'] } } });
+    expect(planOverrides(keys({ left: ['<Super>Home'] }), first.saved, new Set()).writes).toEqual([]);
+  });
+
+  it('restores 0.1.x entries, which only saved the original', () => {
+    const plan = planOverrides(keys({ left: ['<Super>Page_Up'] }), { [WM]: { left: { original: left } } }, new Set());
+    expect(plan.writes).toEqual([{ schemaId: WM, key: 'left', value: left }]);
   });
 });

@@ -99,6 +99,15 @@ ev "$EXT.stateObj.settings.set_boolean('override-conflicts', true)" >/dev/null
 sleep 0.5
 check "conflicting GNOME shortcut removed" "${original_shortcuts//|<Control><Alt>Left/}" \
   "$(ev "$KB.get_strv('switch-to-workspace-left').join('|')")"
+both_sides="$KB.get_strv('switch-to-workspace-left').join('|') + ' / ' + $KB.get_strv('switch-to-workspace-right').join('|')"
+overridden_sides=$(ev "$both_sides")
+ev "$EXT.stateObj.settings.set_strv('left-half', ['<Control><Alt>h'])" >/dev/null
+sleep 0.5
+check "changing a shortcut gives back only its GNOME key" "$original_shortcuts / ${overridden_sides#* / }" \
+  "$(ev "$both_sides")"
+ev "$EXT.stateObj.settings.reset('left-half')" >/dev/null
+sleep 0.5
+check "resetting it removes that GNOME key again" "$overridden_sides" "$(ev "$both_sides")"
 
 GTK_A11Y=none GSK_RENDERER=cairo GDK_BACKEND=wayland WAYLAND_DISPLAY=wayland-0 gjs -c "
   imports.gi.versions.Gtk = '4.0';
