@@ -1,6 +1,8 @@
 // Bookkeeping for the GNOME shortcuts we remove. Kept free of GNOME imports so the restore
 // rules can be unit tested; src/overrides.ts does the GSettings lookups.
 
+import { withoutConflicts } from './accelerators.js';
+
 /** One GNOME key we changed: its value before, and the filtered value we wrote. */
 export interface SavedShortcut {
   original: string[];
@@ -68,4 +70,39 @@ export function restoreSaved(saved: SavedOverrides, lookup: (schemaId: string) =
       if (value) store.set_strv(key, value);
     }
   }
+}
+
+/** A GNOME shortcut key and the value it holds now. */
+export interface ShortcutKey {
+  schemaId: string;
+  key: string;
+  current: string[];
+}
+
+export interface OverridePlan {
+  /** What to store in `overridden-shortcuts` before writing anything. */
+  saved: SavedOverrides;
+  /** Only the GNOME keys whose value actually changes. */
+  writes: Array<{ schemaId: string; key: string; value: string[] }>;
+}
+
+/**
+ * Works out how to bring GNOME's shortcuts in line with `taken`, the accelerators Gnometangle
+ * wants (empty to give everything back). Each key's original is what we saved for it, unless the
+ * user has changed the key since, in which case their value is the new original.
+ */
+export function planOverrides(
+  keys: Iterable<ShortcutKey>,
+  previous: SavedOverrides,
+  taken: ReadonlySet<string>,
+): OverridePlan {
+  const plan: OverridePlan = { saved: {}, writes: [] };
+  for (const { schemaId, key, current } of keys) {
+    const entry = previous[schemaId]?.[key];
+    const original = (entry && restoredValue(entry, current)) ?? current;
+    const desired = withoutConflicts(original, taken);
+    if (desired.length !== original.length) (plan.saved[schemaId] ??= {})[key] = { original, applied: desired };
+    if (!sameShortcuts(desired, current)) plan.writes.push({ schemaId, key, value: desired });
+  }
+  return plan;
 }

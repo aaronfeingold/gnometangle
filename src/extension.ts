@@ -8,9 +8,11 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { acceleratorSet } from './core/accelerators.js';
 import { ACTIONS, SETTINGS, type ActionId } from './core/actions.js';
 import { Indicator } from './indicator.js';
-import { applyOverrides, hasPendingOverrides, restoreOverrides } from './overrides.js';
+import { applyOverrides, restoreOverrides } from './overrides.js';
 import { Snapper } from './snapper.js';
 import { WindowMover } from './window.js';
+
+const SHORTCUT_KEYS = new Set<string>(ACTIONS.map((action) => action.id));
 
 export default class GnometangleExtension extends Extension {
   private settings: Gio.Settings | null = null;
@@ -24,8 +26,6 @@ export default class GnometangleExtension extends Extension {
     this.mover = new WindowMover();
     this.snapper = new Snapper(this.settings, this.mover);
 
-    // A previous session may have ended without disable() running.
-    if (hasPendingOverrides(this.settings)) restoreOverrides(this.settings);
     this.syncOverrides();
 
     for (const action of ACTIONS) {
@@ -34,10 +34,10 @@ export default class GnometangleExtension extends Extension {
       );
     }
 
-    const resync = () => this.resyncOverrides();
     this.settingsHandlers = [
-      this.settings.connect(`changed::${SETTINGS.overrideConflicts}`, resync),
-      ...ACTIONS.map((action) => this.settings!.connect(`changed::${action.id}`, resync)),
+      this.settings.connect('changed', (_settings: Gio.Settings, key: string) => {
+        if (key === SETTINGS.overrideConflicts || SHORTCUT_KEYS.has(key)) this.syncOverrides();
+      }),
       this.settings.connect(`changed::${SETTINGS.showIndicator}`, () => this.syncIndicator()),
     ];
     this.syncIndicator();
@@ -78,16 +78,13 @@ export default class GnometangleExtension extends Extension {
     }
   }
 
+  /** With overrides off, an empty set gives back everything we removed, including after a crash. */
   private syncOverrides(): void {
     const settings = this.settings;
-    if (!settings?.get_boolean(SETTINGS.overrideConflicts)) return;
-    const ours = acceleratorSet(ACTIONS.flatMap((action) => settings.get_strv(action.id)));
+    if (!settings) return;
+    const ours = settings.get_boolean(SETTINGS.overrideConflicts)
+      ? acceleratorSet(ACTIONS.flatMap((action) => settings.get_strv(action.id)))
+      : new Set<string>();
     applyOverrides(settings, ours);
-  }
-
-  private resyncOverrides(): void {
-    if (!this.settings) return;
-    restoreOverrides(this.settings);
-    this.syncOverrides();
   }
 }
