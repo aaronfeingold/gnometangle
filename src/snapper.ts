@@ -8,6 +8,8 @@ import { SETTINGS, behaviorOf, type ActionId } from './core/actions.js';
 import { nextHistory, type WindowHistory } from './core/cycle.js';
 import { computeTarget, mapToWorkArea, moveToWorkArea, rectsClose } from './core/geometry.js';
 import { neighborMonitor } from './core/monitors.js';
+import { workspacePlan } from './core/workspaces.js';
+import type { WorkspaceTarget } from './core/actions.js';
 import { currentWorkArea, frameRect, toRect, type WindowMover } from './window.js';
 
 const SNAPPABLE_TYPES = new Set([Meta.WindowType.NORMAL, Meta.WindowType.DIALOG, Meta.WindowType.MODAL_DIALOG]);
@@ -32,6 +34,10 @@ export class Snapper {
     }
     if (behavior.kind === 'display') {
       this.moveToDisplay(win, behavior.direction);
+      return;
+    }
+    if (behavior.kind === 'workspace') {
+      this.moveToWorkspace(win, behavior.target);
       return;
     }
 
@@ -64,6 +70,22 @@ export class Snapper {
     if (!entry) return;
     this.history.delete(win);
     this.mover.apply(win, entry.restore);
+  }
+
+  /** The frame and history stay as they are, so a snapped window keeps its layout there. */
+  private moveToWorkspace(win: Meta.Window, target: WorkspaceTarget): void {
+    if (win.is_on_all_workspaces()) return;
+    const manager = global.workspace_manager;
+    const current = win.get_workspace()?.index() ?? manager.get_active_workspace_index();
+    const plan = workspacePlan(target, current, manager.get_n_workspaces());
+    if (!plan) return;
+
+    const time = global.get_current_time();
+    for (let i = 0; i < plan.create; i++) manager.append_new_workspace(false, time);
+    const workspace = manager.get_workspace_by_index(plan.index);
+    if (!workspace) return;
+    win.change_workspace(workspace);
+    if (this.settings.get_boolean(SETTINGS.workspaceFollow)) workspace.activate_with_focus(win, time);
   }
 
   private moveToDisplay(win: Meta.Window, direction: 1 | -1): void {

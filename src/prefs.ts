@@ -94,6 +94,14 @@ function buildGeneralPage(settings: Gio.Settings, window: Adw.PreferencesWindow)
       ),
     ),
   );
+  behavior.add(
+    switchRow(
+      settings,
+      SETTINGS.workspaceFollow,
+      _('Follow Windows to Other Workspaces'),
+      _('Switch to the workspace a window is sent to'),
+    ),
+  );
   page.add(behavior);
   page.add(buildIgnoredAppsGroup(settings, window));
 

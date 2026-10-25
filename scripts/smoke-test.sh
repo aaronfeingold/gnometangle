@@ -220,9 +220,9 @@ check "shortcuts return when no longer ignored" "true" "$(ev "$LEFT_ALLOWED")"
 ev "$EXT.stateObj.run('restore')" >/dev/null
 sleep 0.4
 
-# Top bar menu: one submenu per group (7), then a separator and "Customize Shortcuts…".
+# Top bar menu: one submenu per group (8), then a separator and "Customize Shortcuts…".
 check "top bar icon shown" "true" "$(ev "!!$IND")"
-check "top bar menu items" "9" "$(ev "$IND.menu._getMenuItems().length")"
+check "top bar menu items" "10" "$(ev "$IND.menu._getMenuItems().length")"
 check "menu shows the shortcut" "Left Half Ctrl+Alt+Left" \
   "$(ev "(() => { const i = $IND.menu._getMenuItems()[0].menu._getMenuItems()[0];
     return i.label.text + ' ' + i.get_children().filter(c => c instanceof imports.gi.St.Label).pop().text.replace('←', 'Left'); })()")"
@@ -243,6 +243,50 @@ check "next display" "1" "$(ev "global.display.get_focus_window().get_monitor()"
 ev "$EXT.stateObj.run('previous-display')" >/dev/null
 sleep 0.4
 check "previous display" "0" "$(ev "global.display.get_focus_window().get_monitor()")"
+
+# Workspaces: numbered targets are created when missing, the frame stays, and Follow is a setting.
+SMOKE="global.get_window_actors().find(a => a.meta_window.get_title() === 'smoke').meta_window"
+WS="[$SMOKE.get_workspace().index(), global.workspace_manager.get_active_workspace_index()].join(',')"
+SMOKE_FRAME="(() => { const r = $SMOKE.get_frame_rect(); return [r.x, r.y, r.width, r.height].join(','); })()"
+ev "$SMOKE.activate(global.get_current_time())" >/dev/null
+ev "$EXT.stateObj.run('left-half')" >/dev/null
+sleep 0.4
+snapped_frame=$(ev "$SMOKE_FRAME")
+ev "$EXT.stateObj.run('send-to-workspace-3', $SMOKE)" >/dev/null
+sleep 0.6
+check "send to workspace 3 follows the window" "2,2" "$(ev "$WS")"
+check "window keeps its layout on another workspace" "$snapped_frame" "$(ev "$SMOKE_FRAME")"
+ev "$EXT.stateObj.run('send-to-previous-workspace', $SMOKE)" >/dev/null
+sleep 0.6
+check "previous workspace" "1,1" "$(ev "$WS")"
+ev "$EXT.stateObj.settings.set_boolean('workspace-follow', false)" >/dev/null
+ev "$EXT.stateObj.run('send-to-next-workspace', $SMOKE)" >/dev/null
+sleep 0.6
+check "next workspace without following" "2,1" "$(ev "$WS")"
+ev "$EXT.stateObj.settings.reset('workspace-follow')" >/dev/null
+ev "$EXT.stateObj.run('send-to-workspace-1', $SMOKE)" >/dev/null
+sleep 0.6
+check "send to workspace 1" "0,0" "$(ev "$WS")"
+COUNT="global.workspace_manager.get_n_workspaces()"
+ev "$EXT.stateObj.run('send-to-workspace-6', $SMOKE)" >/dev/null
+sleep 0.6
+check "missing workspaces are created" "5,5 6" "$(ev "$WS") $(ev "$COUNT")"
+ev "$EXT.stateObj.run('send-to-workspace-1', $SMOKE)" >/dev/null
+# With dynamic workspaces GNOME then drops the empty ones in between: the window still gets a new one.
+MUTTER="new imports.gi.Gio.Settings({schema_id: 'org.gnome.mutter'})"
+ev "$MUTTER.set_boolean('dynamic-workspaces', true)" >/dev/null
+sleep 1
+ev "globalThis._smokeWorkspace = $SMOKE.get_workspace(); 1" >/dev/null
+ev "$EXT.stateObj.run('send-to-workspace-6', $SMOKE)" >/dev/null
+sleep 1
+check "dynamic workspaces: window moves to a new workspace" "true" \
+  "$(ev "$SMOKE.get_workspace() !== globalThis._smokeWorkspace && $SMOKE.get_workspace().active")"
+ev "$EXT.stateObj.run('send-to-workspace-1', $SMOKE)" >/dev/null
+ev "$MUTTER.reset('dynamic-workspaces')" >/dev/null
+sleep 1
+ev "$SMOKE.activate(global.get_current_time())" >/dev/null
+ev "$EXT.stateObj.run('restore')" >/dev/null
+sleep 0.4
 
 # Open the preferences window through the regular Extensions service.
 dbus-update-activation-environment WAYLAND_DISPLAY=wayland-0 GDK_BACKEND=wayland GSK_RENDERER=cairo GTK_A11Y=none

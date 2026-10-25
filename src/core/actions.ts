@@ -2,9 +2,12 @@
 // shortcuts and what it does. The GSettings schema is generated from this list at build time.
 // This module must stay free of imports so the build script can evaluate it.
 
-export type ActionGroup = 'halves' | 'corners' | 'thirds' | 'fourths' | 'size' | 'move' | 'display';
+export type ActionGroup = 'halves' | 'corners' | 'thirds' | 'fourths' | 'size' | 'move' | 'workspace' | 'display';
 
 export type Edge = 'left' | 'right' | 'top' | 'bottom';
+
+/** A workspace number from 1, or the neighbouring workspace. */
+export type WorkspaceTarget = number | 'next' | 'previous';
 
 /** A region expressed as fractions of a work area, from 0 to 1 on each axis. */
 export interface Region {
@@ -33,6 +36,8 @@ export type ActionBehavior =
   | { readonly kind: 'resize'; readonly grow: boolean; readonly axis?: 'width' | 'height' }
   /** Slides to an edge of the work area without resizing. */
   | { readonly kind: 'move'; readonly edge: Edge }
+  /** Sends the window to another workspace, keeping its frame, and optionally follows it. */
+  | { readonly kind: 'workspace'; readonly target: WorkspaceTarget }
   | { readonly kind: 'display'; readonly direction: 1 | -1 };
 
 export interface ActionDef {
@@ -69,6 +74,13 @@ const halves = (toRegion: (size: number) => Region): ActionBehavior => ({
 });
 const segments = (...regions: Region[]): ActionBehavior => ({ kind: 'region', regions, majorAxis: true });
 const segment = (x0: number, x1: number): ActionBehavior => segments({ x0, x1, y0: 0, y1: 1 });
+const sendToWorkspace = (n: number) => ({
+  id: `send-to-workspace-${n}` as const,
+  label: `Workspace ${n}`,
+  group: 'workspace' as const,
+  defaults: [] as readonly string[],
+  behavior: { kind: 'workspace', target: n } as const,
+});
 
 export const ACTIONS = [
   {
@@ -247,6 +259,23 @@ export const ACTIONS = [
   { id: 'move-up', label: 'Move Up', group: 'move', defaults: [], behavior: { kind: 'move', edge: 'top' } },
   { id: 'move-down', label: 'Move Down', group: 'move', defaults: [], behavior: { kind: 'move', edge: 'bottom' } },
 
+  // Ids avoid GNOME's own move-to-workspace-* names, which Mutter would refuse.
+  ...[1, 2, 3, 4, 5, 6, 7, 8, 9].map(sendToWorkspace),
+  {
+    id: 'send-to-previous-workspace',
+    label: 'Previous Workspace',
+    group: 'workspace',
+    defaults: [`${CA}<Shift>Left`],
+    behavior: { kind: 'workspace', target: 'previous' },
+  },
+  {
+    id: 'send-to-next-workspace',
+    label: 'Next Workspace',
+    group: 'workspace',
+    defaults: [`${CA}<Shift>Right`],
+    behavior: { kind: 'workspace', target: 'next' },
+  },
+
   {
     id: 'next-display',
     label: 'Next Display',
@@ -278,6 +307,7 @@ export const GROUP_LABELS: Record<ActionGroup, string> = {
   fourths: 'Fourths',
   size: 'Size and Position',
   move: 'Move',
+  workspace: 'Workspaces',
   display: 'Displays',
 };
 
@@ -291,6 +321,7 @@ export const SETTINGS = {
   overriddenShortcuts: 'overridden-shortcuts',
   showIndicator: 'show-indicator',
   ignoredApps: 'ignored-apps',
+  workspaceFollow: 'workspace-follow',
   unregisteredShortcuts: 'unregistered-shortcuts',
 } as const;
 

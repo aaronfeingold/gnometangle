@@ -58,6 +58,8 @@ preferences window.
 | Center                                            | Ctrl+Alt+C                  |
 | Restore                                           | Ctrl+Alt+Backspace          |
 | Move left / right / up / down                     | unset                       |
+| Send to workspace 1–9                             | unset                       |
+| Send to previous / next workspace                 | Ctrl+Alt+Shift+Left / Right |
 | Next / Previous display                           | Ctrl+Alt+Super+Right / Left |
 
 Behaviour borrowed from Rectangle:
@@ -70,6 +72,10 @@ Behaviour borrowed from Rectangle:
 - Make larger and make smaller keep edges that touch the screen pinned, so a left-half window grows to the right.
   The width and height versions do the same along one axis.
 - Move left, right, up and down slide the window to that edge of the screen without resizing it.
+- Sending a window to another workspace keeps its size and position, so a snapped window stays snapped. By default
+  you follow it there. Sending to a workspace that doesn't exist yet creates it; with GNOME's dynamic workspaces,
+  GNOME then removes any empty ones in between, so the window lands on a new workspace after the ones in use.
+  Previous and next stop at the first and last workspace.
 
 ## Customize shortcuts
 
@@ -100,6 +106,7 @@ Open them from the top bar menu (**Customize Shortcuts…**) or with
 - Cycle sizes on repeat (on by default).
 - Almost maximize size (90 percent by default).
 - Resize step for make larger and make smaller.
+- Follow windows to other workspaces (on by default).
 - Opinionated overrides (off by default), described below.
 - Ignored apps: while one of them has focus, Gnometangle's shortcuts are turned off so the app gets those keys.
   The top bar menu still works on its windows.
@@ -109,11 +116,12 @@ Open them from the top bar menu (**Customize Shortcuts…**) or with
 Some of Gnometangle's default shortcuts are also GNOME shortcuts. Gnometangle doesn't change your GNOME shortcuts
 unless you ask it to, so with the defaults both claim these keys and only one of the two actions runs:
 
-| Keys                  | GNOME action                     | Gnometangle action |
-| --------------------- | -------------------------------- | ------------------ |
-| Ctrl+Alt+Left / Right | Switch to workspace left / right | Left / Right half  |
-| Ctrl+Alt+Up / Down    | Switch to workspace up / down    | Top / Bottom half  |
-| Ctrl+Alt+Shift+Up     | Move window one workspace up     | Maximize height    |
+| Keys                        | GNOME action                           | Gnometangle action                |
+| --------------------------- | -------------------------------------- | --------------------------------- |
+| Ctrl+Alt+Left / Right       | Switch to workspace left / right       | Left / Right half                 |
+| Ctrl+Alt+Up / Down          | Switch to workspace up / down          | Top / Bottom half                 |
+| Ctrl+Alt+Shift+Up           | Move window one workspace up           | Maximize height                   |
+| Ctrl+Alt+Shift+Left / Right | Move window one workspace left / right | Send to previous / next workspace |
 
 To let Gnometangle have them, turn on **Opinionated Overrides** in the **General** page of the preferences, or run:
 
