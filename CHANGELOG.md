@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- **Opinionated Overrides is now called Enable Overrides.** The setting and its behavior are the same; only the
+  label and its description changed. See [Enable overrides](README.md#enable-overrides).
+
 ## 0.2.0 (2026-10-24)
 
 ### Upgrading
@@ -9,7 +16,8 @@
   extension was enabled. If you never changed this setting, you now get the new default: your GNOME shortcuts are
   restored the first time 0.2.0 starts, and those keys go back to GNOME. To keep the old behavior, turn on
   **Opinionated Overrides** in the preferences. See
-  [Opinionated overrides](README.md#opinionated-overrides).
+  [Enable overrides](README.md#enable-overrides) (called
+  Opinionated Overrides in this release).
 
 ### Added
 
