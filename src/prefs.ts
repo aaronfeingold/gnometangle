@@ -88,9 +88,9 @@ function buildGeneralPage(settings: Gio.Settings, window: Adw.PreferencesWindow)
     switchRow(
       settings,
       SETTINGS.overrideConflicts,
-      _('Opinionated Overrides'),
+      _('Enable Overrides'),
       _(
-        'Removes the GNOME shortcuts that use the same keys as Gnometangle, such as Ctrl+Alt+Arrow for switching workspaces and Ctrl+Alt+Shift+Up for moving a window up a workspace. Turning this off puts them back.',
+        'Lets Gnometangle use keys that GNOME also assigns, such as Ctrl+Alt+Arrow for switching workspaces and Ctrl+Alt+Shift+Up for moving a window up a workspace, so every layout stays under one comfortable Ctrl+Alt hand position. Turning this off gives those keys back to GNOME.',
       ),
     ),
   );
