@@ -9,6 +9,12 @@ export type Edge = 'left' | 'right' | 'top' | 'bottom';
 /** A workspace number from 1, or the neighbouring workspace. */
 export type WorkspaceTarget = number | 'next' | 'previous';
 
+/**
+ * Another display: next or previous in display order, the nearest one in a direction of the
+ * physical layout, or a display number from 1 (left to right, then top to bottom).
+ */
+export type DisplayTarget = 'next' | 'previous' | Edge | number;
+
 /** A region expressed as fractions of a work area, from 0 to 1 on each axis. */
 export interface Region {
   x0: number;
@@ -38,7 +44,12 @@ export type ActionBehavior =
   | { readonly kind: 'move'; readonly edge: Edge }
   /** Sends the window to another workspace, keeping its frame, and optionally follows it. */
   | { readonly kind: 'workspace'; readonly target: WorkspaceTarget }
-  | { readonly kind: 'display'; readonly direction: 1 | -1 };
+  /** Sends the window to another display, keeping a snapped layout or a floating window's size. */
+  | { readonly kind: 'display'; readonly target: DisplayTarget }
+  /** Focuses the top window on another display without moving anything. */
+  | { readonly kind: 'focus-display'; readonly target: 'next' | 'previous' }
+  /** Briefly shows each display's number on it. */
+  | { readonly kind: 'identify-displays' };
 
 export interface ActionDef {
   /**
@@ -74,6 +85,13 @@ const halves = (toRegion: (size: number) => Region): ActionBehavior => ({
 });
 const segments = (...regions: Region[]): ActionBehavior => ({ kind: 'region', regions, majorAxis: true });
 const segment = (x0: number, x1: number): ActionBehavior => segments({ x0, x1, y0: 0, y1: 1 });
+const sendToDisplay = (n: number) => ({
+  id: `send-to-display-${n}` as const,
+  label: `Display ${n}`,
+  group: 'display' as const,
+  defaults: [] as readonly string[],
+  behavior: { kind: 'display', target: n } as const,
+});
 const sendToWorkspace = (n: number) => ({
   id: `send-to-workspace-${n}` as const,
   label: `Workspace ${n}`,
@@ -281,14 +299,65 @@ export const ACTIONS = [
     label: 'Next Display',
     group: 'display',
     defaults: [`${CA}<Super>Right`],
-    behavior: { kind: 'display', direction: 1 },
+    behavior: { kind: 'display', target: 'next' },
   },
   {
     id: 'previous-display',
     label: 'Previous Display',
     group: 'display',
     defaults: [`${CA}<Super>Left`],
-    behavior: { kind: 'display', direction: -1 },
+    behavior: { kind: 'display', target: 'previous' },
+  },
+  // Ids avoid GNOME's own move-to-monitor-* names.
+  {
+    id: 'display-left',
+    label: 'Display on the Left',
+    group: 'display',
+    defaults: [],
+    behavior: { kind: 'display', target: 'left' },
+  },
+  {
+    id: 'display-right',
+    label: 'Display on the Right',
+    group: 'display',
+    defaults: [],
+    behavior: { kind: 'display', target: 'right' },
+  },
+  {
+    id: 'display-above',
+    label: 'Display Above',
+    group: 'display',
+    defaults: [],
+    behavior: { kind: 'display', target: 'top' },
+  },
+  {
+    id: 'display-below',
+    label: 'Display Below',
+    group: 'display',
+    defaults: [],
+    behavior: { kind: 'display', target: 'bottom' },
+  },
+  ...[1, 2, 3].map(sendToDisplay),
+  {
+    id: 'focus-next-display',
+    label: 'Focus Next Display',
+    group: 'display',
+    defaults: [],
+    behavior: { kind: 'focus-display', target: 'next' },
+  },
+  {
+    id: 'focus-previous-display',
+    label: 'Focus Previous Display',
+    group: 'display',
+    defaults: [],
+    behavior: { kind: 'focus-display', target: 'previous' },
+  },
+  {
+    id: 'identify-displays',
+    label: 'Identify Displays',
+    group: 'display',
+    defaults: [],
+    behavior: { kind: 'identify-displays' },
   },
 ] as const satisfies readonly ActionDef[];
 

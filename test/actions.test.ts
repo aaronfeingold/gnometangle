@@ -112,6 +112,16 @@ describe('action behaviors', () => {
   it('cover restore and both display directions', () => {
     const kinds = ACTIONS.map((a): ActionBehavior => a.behavior);
     expect(kinds.filter((b) => b.kind === 'restore')).toHaveLength(1);
-    expect(kinds.flatMap((b) => (b.kind === 'display' ? [b.direction] : [])).sort()).toEqual([-1, 1]);
+    expect(kinds.flatMap((b) => (b.kind === 'display' ? [b.target] : []))).toEqual([
+      'next',
+      'previous',
+      'left',
+      'right',
+      'top',
+      'bottom',
+      1,
+      2,
+      3,
+    ]);
   });
 });

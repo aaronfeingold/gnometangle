@@ -23,9 +23,11 @@ LOG="$HOME/shell.log"
 failures=0
 shell_pid=
 client_pid=
+client2_pid=
 
 cleanup() {
   [[ -n "$client_pid" ]] && kill "$client_pid" 2>/dev/null || true
+  [[ -n "$client2_pid" ]] && kill "$client2_pid" 2>/dev/null || true
   [[ -n "$shell_pid" ]] && kill "$shell_pid" 2>/dev/null || true
 }
 trap cleanup EXIT
@@ -60,6 +62,8 @@ mkdir -p "$HOME/.local/share/gnome-shell/extensions/$UUID"
 unzip -q -o "$ZIP" -d "$HOME/.local/share/gnome-shell/extensions/$UUID"
 glib-compile-schemas "$HOME/.local/share/gnome-shell/extensions/$UUID/schemas"
 
+# Logical layout, so monitors with different scales have different logical sizes (checked below).
+gsettings set org.gnome.mutter experimental-features "['scale-monitor-framebuffer']"
 shell_args=(--headless --wayland --unsafe-mode --virtual-monitor 1920x1080 --virtual-monitor 1280x1024)
 if gnome-shell --help 2>&1 | grep -q -- '--no-x11'; then shell_args+=(--no-x11); fi
 gnome-shell "${shell_args[@]}" >"$LOG" 2>&1 &
@@ -79,6 +83,7 @@ gnome-shell --version
 WA="(()=>{const w=global.display.get_focus_window(); const r=w.get_work_area_current_monitor(); return [r.x,r.y,r.width,r.height].join(',')})()"
 FRAME="(()=>{const r=global.display.get_focus_window().get_frame_rect(); return [r.x,r.y,r.width,r.height].join(',')})()"
 EXT="Main.extensionManager.lookup('$UUID')"
+SMOKE_FRAME_EXPR="(() => { const w = global.get_window_actors().find(a => a.meta_window.get_title() === 'smoke').meta_window; const r = w.get_frame_rect(); return [r.x, r.y, r.width, r.height].join(','); })()"
 KB="new imports.gi.Gio.Settings({schema_id: 'org.gnome.desktop.wm.keybindings'})"
 
 original_shortcuts=$(ev "$KB.get_strv('switch-to-workspace-left').join('|')")
@@ -243,6 +248,86 @@ check "next display" "1" "$(ev "global.display.get_focus_window().get_monitor()"
 ev "$EXT.stateObj.run('previous-display')" >/dev/null
 sleep 0.4
 check "previous display" "0" "$(ev "global.display.get_focus_window().get_monitor()")"
+
+# Directions follow the physical layout (monitor 1 is to the right), and displays are numbered left to right.
+ON_MONITOR="global.display.get_focus_window().get_monitor()"
+move_to() {
+  ev "$EXT.stateObj.run('$1')" >/dev/null
+  sleep 0.5
+  ev "$ON_MONITOR"
+}
+check "display on the right" "1" "$(move_to display-right)"
+check "nothing above stays put" "1" "$(move_to display-above)"
+check "display on the left" "0" "$(move_to display-left)"
+check "display 2" "1" "$(move_to send-to-display-2)"
+check "display 1" "0" "$(move_to send-to-display-1)"
+
+ev "$EXT.stateObj.run('identify-displays')" >/dev/null
+IDENTIFY="Main.layoutManager.uiGroup.get_children().filter(c => c.has_style_class_name?.('gnometangle-identify')).map(l => l.text).join(',')"
+check "identify shows each display's number" "1,2" "$(ev "$IDENTIFY")"
+# Shown for 2 seconds; GLib may run a seconds timeout up to a second late, so allow for that.
+for _ in $(seq 1 20); do
+  [[ -z "$(ev "$IDENTIFY")" ]] && break
+  sleep 0.25
+done
+check "identify goes away" "" "$(ev "$IDENTIFY")"
+
+# Focus another display: a second window on monitor 1 gets focus, and nothing moves.
+GTK_A11Y=none GSK_RENDERER=cairo GDK_BACKEND=wayland WAYLAND_DISPLAY=wayland-0 gjs -c "
+  imports.gi.versions.Gtk = '4.0';
+  const {Gtk, GLib} = imports.gi;
+  Gtk.init();
+  new Gtk.Window({title: 'smoke2', default_width: 300, default_height: 200}).present();
+  new GLib.MainLoop(null, false).run();
+" >"$HOME/client2.log" 2>&1 &
+client2_pid=$!
+SMOKE2="global.get_window_actors().find(a => a.meta_window.get_title() === 'smoke2')?.meta_window"
+for _ in $(seq 1 40); do
+  [[ "$(ev "!!$SMOKE2" 2>/dev/null)" == true ]] && break
+  sleep 0.25
+done
+ev "$EXT.stateObj.run('send-to-display-2', $SMOKE2)" >/dev/null
+sleep 0.5
+SMOKE="global.get_window_actors().find(a => a.meta_window.get_title() === 'smoke').meta_window"
+ev "$SMOKE.activate(global.get_current_time())" >/dev/null
+sleep 0.3
+ev "$EXT.stateObj.run('focus-next-display')" >/dev/null
+sleep 0.3
+check "focus next display" "smoke2 1 0" \
+  "$(ev "[global.display.get_focus_window().get_title(), $SMOKE2.get_monitor(), $SMOKE.get_monitor()].join(' ')")"
+kill "$client2_pid" 2>/dev/null || true
+ev "$SMOKE.activate(global.get_current_time())" >/dev/null
+sleep 0.5
+
+# Mixed scale: monitor 0 at 2x (logical 960x540) next to monitor 1 at 1x. A snapped window keeps
+# its layout exactly both ways, which needs it on the target monitor before it is resized.
+DC=(gdbus call --session --dest org.gnome.Mutter.DisplayConfig --object-path /org/gnome/Mutter/DisplayConfig --method org.gnome.Mutter.DisplayConfig)
+apply_monitors() {
+  local serial
+  serial=$("${DC[@]}.GetCurrentState" | sed -E 's/^\(uint32 ([0-9]+),.*/\1/')
+  "${DC[@]}.ApplyMonitorsConfig" "$serial" 1 "$1" "@a{sv} {}" >/dev/null
+  sleep 1.5
+}
+apply_monitors "[(0, 0, 2.0, uint32 0, true, [('Meta-0', '1920x1080@60.000', @a{sv} {})]), (960, 0, 1.0, uint32 0, false, [('Meta-1', '1280x1024@60.000', @a{sv} {})])]"
+check "mixed scale monitors" "960x540@2 1280x1024@1" "$(ev "[0, 1].map(i => { const g = global.display.get_monitor_geometry(i); return g.width + 'x' + g.height + '@' + global.display.get_monitor_scale(i); }).join(' ')")"
+LEFT_HALF_OF="(() => { const a = $SMOKE.get_work_area_for_monitor(MON); return [a.x, a.y, Math.round(a.width / 2), a.height].join(','); })()"
+# Shrinking monitor 0 can leave the window on either monitor (it differs between GNOME releases), so
+# check relative to where it is: snapped there, kept exactly on the other display, and back again.
+ev "$SMOKE.activate(global.get_current_time())" >/dev/null
+here=$(ev "$SMOKE.get_monitor()")
+there=$((1 - here))
+ev "$EXT.stateObj.run('left-half', $SMOKE)" >/dev/null
+sleep 0.5
+check "left half on display $here" "$(ev "${LEFT_HALF_OF/MON/$here}")" "$(ev "$SMOKE_FRAME_EXPR")"
+ev "$EXT.stateObj.run('next-display', $SMOKE)" >/dev/null
+sleep 1
+check "left half kept on display $there" "$(ev "${LEFT_HALF_OF/MON/$there}")" "$(ev "$SMOKE_FRAME_EXPR")"
+ev "$EXT.stateObj.run('previous-display', $SMOKE)" >/dev/null
+sleep 1
+check "left half kept back on display $here" "$(ev "${LEFT_HALF_OF/MON/$here}")" "$(ev "$SMOKE_FRAME_EXPR")"
+apply_monitors "[(0, 0, 1.0, uint32 0, true, [('Meta-0', '1920x1080@60.000', @a{sv} {})]), (1920, 0, 1.0, uint32 0, false, [('Meta-1', '1280x1024@60.000', @a{sv} {})])]"
+ev "$EXT.stateObj.run('restore', $SMOKE)" >/dev/null
+sleep 0.4
 
 # Workspaces: numbered targets are created when missing, the frame stays, and Follow is a setting.
 SMOKE="global.get_window_actors().find(a => a.meta_window.get_title() === 'smoke').meta_window"

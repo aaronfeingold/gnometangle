@@ -39,28 +39,32 @@ Choosing one snaps the window you were using, so the menu doubles as a cheat she
 Rectangle uses Ctrl+Option on macOS. Here that is **Ctrl+Alt**. Every shortcut can be changed or disabled in the
 preferences window.
 
-| Action                                            | Default                     |
-| ------------------------------------------------- | --------------------------- |
-| Left / Right half                                 | Ctrl+Alt+Left / Right       |
-| Top / Bottom half                                 | Ctrl+Alt+Up / Down          |
-| Center half                                       | unset                       |
-| Top left / Top right / Bottom left / Bottom right | Ctrl+Alt+U / I / J / K      |
-| First / Center / Last third                       | Ctrl+Alt+D / F / G          |
-| First / Last two thirds                           | Ctrl+Alt+E / T              |
-| Center two thirds                                 | unset                       |
-| First / Second / Third / Last fourth              | Ctrl+Alt+1 / 2 / 3 / 4      |
-| First / Center / Last three fourths               | unset                       |
-| Maximize                                          | Ctrl+Alt+Enter              |
-| Almost maximize                                   | unset                       |
-| Maximize height                                   | Ctrl+Alt+Shift+Up           |
-| Make smaller / Make larger                        | Ctrl+Alt+Minus / Equal      |
-| Smaller / Larger width, Smaller / Larger height   | unset                       |
-| Center                                            | Ctrl+Alt+C                  |
-| Restore                                           | Ctrl+Alt+Backspace          |
-| Move left / right / up / down                     | unset                       |
-| Send to workspace 1–9                             | unset                       |
-| Send to previous / next workspace                 | Ctrl+Alt+Shift+Left / Right |
-| Next / Previous display                           | Ctrl+Alt+Super+Right / Left |
+| Action                                            | Default                        |
+| ------------------------------------------------- | ------------------------------ |
+| Left / Right half                                 | Ctrl+Alt+Left / Right          |
+| Top / Bottom half                                 | Ctrl+Alt+Up / Down             |
+| Center half                                       | unset                          |
+| Top left / Top right / Bottom left / Bottom right | Ctrl+Alt+U / I / J / K         |
+| First / Center / Last third                       | Ctrl+Alt+D / F / G             |
+| First / Last two thirds                           | Ctrl+Alt+E / T                 |
+| Center two thirds                                 | unset                          |
+| First / Second / Third / Last fourth              | Ctrl+Alt+1 / 2 / 3 / 4         |
+| First / Center / Last three fourths               | unset                          |
+| Maximize                                          | Ctrl+Alt+Enter                 |
+| Almost maximize                                   | unset                          |
+| Maximize height                                   | Ctrl+Alt+Shift+Up              |
+| Make smaller / Make larger                        | Ctrl+Alt+Minus / Equal         |
+| Smaller / Larger width, Smaller / Larger height   | unset                          |
+| Center                                            | Ctrl+Alt+C                     |
+| Restore                                           | Ctrl+Alt+Backspace             |
+| Move left / right / up / down                     | unset                          |
+| Send to workspace 1–9                             | unset                          |
+| Send to previous / next workspace                 | Ctrl+Alt+Shift+Left / Right    |
+| Next / Previous display                           | Ctrl+Alt+Super+Right / Left    |
+| Display on the left / right, above / below        | unset                          |
+| Display 1 / 2 / 3                                 | unset                          |
+| Focus next / previous display                     | unset                          |
+| Identify displays                                 | unset, and in the top bar menu |
 
 Behaviour borrowed from Rectangle:
 
@@ -68,7 +72,12 @@ Behaviour borrowed from Rectangle:
   cycle through the three thirds.
 - Thirds and fourths stack vertically on portrait monitors.
 - Restore puts the window back where it was before the first snap.
-- Moving to another display keeps a snapped window's layout and a floating window's size.
+- Moving to another display keeps a snapped window's layout and a floating window's size, also between displays with
+  different scales (such as a 2x laptop panel next to a 1x monitor).
+- Next and previous display go through the displays left to right. The direction actions pick the nearest display
+  that way in your monitor layout, and Display 1, 2 and 3 are numbered left to right, then top to bottom.
+  **Identify Displays** shows each number on its display for a moment.
+- Focus next / previous display focuses the top window on that display without moving anything.
 - Make larger and make smaller keep edges that touch the screen pinned, so a left-half window grows to the right.
   The width and height versions do the same along one axis.
 - Move left, right, up and down slide the window to that edge of the screen without resizing it.

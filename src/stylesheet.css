@@ -9,3 +9,13 @@
 .gnometangle-warning {
   color: #f8e45c;
 }
+
+/* Identify Displays: each display's number, shown in its middle for a moment. */
+.gnometangle-identify {
+  font-size: 96pt;
+  font-weight: bold;
+  color: #ffffff;
+  background-color: rgba(0, 0, 0, 0.6);
+  border-radius: 24px;
+  padding: 12px 48px;
+}
