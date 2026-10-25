@@ -95,6 +95,16 @@ results in `docs/images/`:
 scripts/screenshots.sh     # needs gnome-shell, gjs, libadwaita, ImageMagick and ffmpeg
 ```
 
+## Translations
+
+User-facing strings are wrapped in `_()`, imported from the shell's `extension.js` or `prefs.js`. Action and group
+labels in `src/core/actions.ts` are translated where they are shown, since that file can't import anything.
+
+- **New or changed strings:** run `pnpm pot` (needs `xgettext`) and commit `po/gnometangle.pot`.
+- **New language:** `msginit -i po/gnometangle.pot -o po/<lang>.po --locale=<lang>`, translate, and commit it. The
+  build compiles every `po/*.po` into `locale/` with `msgfmt`.
+- **Updating a language:** `msgmerge -U po/<lang>.po po/gnometangle.pot`.
+
 ## Pull requests
 
 - Keep each pull request to one change, and describe what it fixes and how you tested it.
