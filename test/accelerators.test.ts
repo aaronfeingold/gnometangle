@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { acceleratorLabel, acceleratorSet, normalizeAccelerator, withoutConflicts } from '../src/core/accelerators.js';
+import {
+  acceleratorLabel,
+  acceleratorSet,
+  normalizeAccelerator,
+  releaseAccelerator,
+  withoutConflicts,
+} from '../src/core/accelerators.js';
 import { ACTIONS } from '../src/core/actions.js';
 
 describe('normalizeAccelerator', () => {
@@ -69,5 +75,32 @@ describe('acceleratorLabel', () => {
 
   it('labels every default shortcut', () => {
     for (const accel of ACTIONS.flatMap((a) => [...a.defaults])) expect(acceleratorLabel(accel)).not.toBe('');
+  });
+});
+
+describe('releaseAccelerator', () => {
+  const shortcuts = new Map<string, string[]>([
+    ['left-half', ['<Control><Alt>Left']],
+    ['first-third', ['<Control><Alt>d', '<Alt><Control>Left']],
+    ['center', ['<Control><Alt>c']],
+  ]);
+
+  it('removes the keys from every other action, in any spelling', () => {
+    expect(releaseAccelerator(shortcuts, 'center', '<Primary><Alt>Left')).toEqual(
+      new Map([
+        ['left-half', []],
+        ['first-third', ['<Control><Alt>d']],
+      ]),
+    );
+  });
+
+  it("leaves the owner's own shortcuts alone", () => {
+    expect(releaseAccelerator(shortcuts, 'left-half', '<Control><Alt>Left')).toEqual(
+      new Map([['first-third', ['<Control><Alt>d']]]),
+    );
+  });
+
+  it('returns nothing when no other action uses the keys', () => {
+    expect(releaseAccelerator(shortcuts, 'center', '<Control><Alt>x').size).toBe(0);
   });
 });
