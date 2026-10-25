@@ -101,3 +101,22 @@ export function withoutConflicts(existing: readonly string[], taken: ReadonlySet
     return !n || !taken.has(n);
   });
 }
+
+/**
+ * Frees `accelerator` for `owner`: returns each other entry of `shortcuts` that used it, mapped to
+ * its shortcuts without it. Entries that didn't use it are left out.
+ */
+export function releaseAccelerator(
+  shortcuts: ReadonlyMap<string, readonly string[]>,
+  owner: string,
+  accelerator: string,
+): Map<string, string[]> {
+  const taken = acceleratorSet([accelerator]);
+  const released = new Map<string, string[]>();
+  for (const [id, current] of shortcuts) {
+    if (id === owner) continue;
+    const kept = withoutConflicts(current, taken);
+    if (kept.length !== current.length) released.set(id, kept);
+  }
+  return released;
+}

@@ -5,7 +5,7 @@ import Gtk from 'gi://Gtk';
 
 import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-import { normalizeAccelerator } from './core/accelerators.js';
+import { releaseAccelerator } from './core/accelerators.js';
 import { ACTIONS, GROUP_LABELS, SETTINGS, type ActionDef, type ActionGroup } from './core/actions.js';
 
 export default class GnometanglePreferences extends ExtensionPreferences {
@@ -182,14 +182,11 @@ function captureShortcut(settings: Gio.Settings, action: ActionDef, window: Adw.
       if (mask === 0 || !Gtk.accelerator_valid(key, mask)) return true;
 
       const accel = Gtk.accelerator_name_with_keycode(null, key, keycode, mask);
-      const taken = normalizeAccelerator(accel);
-      for (const other of ACTIONS) {
-        if (other.id === action.id) continue;
-        const kept = settings.get_strv(other.id).filter((a) => normalizeAccelerator(a) !== taken);
-        if (kept.length !== settings.get_strv(other.id).length) {
-          settings.set_strv(other.id, kept);
-          window.add_toast(new Adw.Toast({ title: `Removed the same shortcut from ${other.label}` }));
-        }
+      const shortcuts = new Map(ACTIONS.map((a) => [a.id, settings.get_strv(a.id)]));
+      for (const [id, kept] of releaseAccelerator(shortcuts, action.id, accel)) {
+        settings.set_strv(id, kept);
+        const label = ACTIONS.find((a) => a.id === id)!.label;
+        window.add_toast(new Adw.Toast({ title: `Removed the same shortcut from ${label}` }));
       }
       settings.set_strv(action.id, [accel]);
       dialog.close();
