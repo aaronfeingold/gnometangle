@@ -40,7 +40,9 @@ journalctl --user -f -o cat /usr/bin/gnome-shell
 ```
 src/core/          Pure TypeScript with no GNOME imports: actions, geometry, cycling, monitors, accelerators.
                    Everything here is unit tested with Vitest.
-src/extension.ts   Registers keybindings, owns the top bar icon, and moves windows through Mutter.
+src/extension.ts   Enable and disable: settings, keybindings, the top bar icon and overrides.
+src/snapper.ts     Runs actions on windows, with the per-window history for cycling and restore.
+src/window.ts      Reads window frames and work areas, and moves windows through Mutter.
 src/indicator.ts   Top bar icon and menu: every action with its shortcut, plus "Customize Shortcuts…".
 src/overrides.ts   Saves, removes and restores conflicting GNOME shortcuts.
 src/compat.ts      Window API differences between GNOME 45-48 and 49+.
@@ -96,8 +98,7 @@ scripts/screenshots.sh     # needs gnome-shell, gjs, libadwaita, ImageMagick and
 ## Pull requests
 
 - Keep each pull request to one change, and describe what it fixes and how you tested it.
-- `pnpm check` must pass, and the smoke test should pass for changes to `src/extension.ts`, `src/indicator.ts` or
-  `src/prefs.ts`.
+- `pnpm check` must pass, and the smoke test should pass for changes to anything in `src/` outside `src/core/`.
 - `main` only changes through pull requests that pass CI, and the maintainer reviews each one before it merges.
 
 ## Releasing (maintainer)
