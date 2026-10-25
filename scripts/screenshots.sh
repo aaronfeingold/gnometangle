@@ -73,6 +73,9 @@ ev "Main.extensionManager.enableExtension('$UUID')" >/dev/null
 sleep 1
 EXT="Main.extensionManager.lookup('$UUID').stateObj"
 ev "$EXT.settings.set_int('gap-size', 8)" >/dev/null
+# Show the defaults working: without the overrides the halves share their keys with GNOME's
+# workspace shortcuts, and the menu and preferences would show conflict warnings.
+ev "$EXT.settings.set_boolean('override-conflicts', true)" >/dev/null
 
 # Demo windows: a libadwaita window with a header bar and a status page.
 open_window() {

@@ -291,6 +291,7 @@ export const SETTINGS = {
   overriddenShortcuts: 'overridden-shortcuts',
   showIndicator: 'show-indicator',
   ignoredApps: 'ignored-apps',
+  unregisteredShortcuts: 'unregistered-shortcuts',
 } as const;
 
 export const SCHEMA_ID = 'org.gnome.shell.extensions.gnometangle';

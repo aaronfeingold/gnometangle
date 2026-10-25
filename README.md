@@ -84,6 +84,10 @@ Every shortcut can be changed or disabled:
 If the keys you pick are already used by another Gnometangle action, they are moved to the new one, and a notice
 says which action lost them.
 
+A warning icon marks a shortcut that won't work reliably, in the preferences and in the top bar menu, with the reason:
+another GNOME shortcut or one of your custom shortcuts uses the same keys (only one of them runs), or GNOME refused
+to register it. Click the icon in the preferences to choose other keys.
+
 <br clear="right">
 
 ## Settings
@@ -126,8 +130,8 @@ changes, so they are also restored on the next start if the shell ever exits wit
 
 The other way around works too: leave it off and give the Gnometangle actions different keys in the preferences.
 
-On Ubuntu, Ctrl+Alt+T opens a terminal. That binding lives in a different place and is not overridden, so the
-terminal wins. Rebind "Last Two Thirds" (or the terminal shortcut) if you want both.
+On Ubuntu, Ctrl+Alt+T opens a terminal. That binding lives in a different place and is not overridden, so "Last Two
+Thirds" shows a warning. Rebind it (or the terminal shortcut) if you want both.
 
 ## Install
 

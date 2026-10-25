@@ -13,7 +13,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const metadata = JSON.parse(readFileSync(join(root, 'metadata.json'), 'utf8'));
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
 
-const sources = ['src/extension.ts', 'src/indicator.ts', 'src/prefs.ts'];
+const sources = ['src/extension.ts', 'src/gnome-shortcuts.ts', 'src/indicator.ts', 'src/prefs.ts'];
 const extracted = execFileSync(
   'xgettext',
   [

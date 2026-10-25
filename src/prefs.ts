@@ -7,6 +7,13 @@ import { ExtensionPreferences, gettext as _ } from 'resource:///org/gnome/Shell/
 
 import { releaseAccelerator } from './core/accelerators.js';
 import { ACTIONS, GROUP_LABELS, SETTINGS, type ActionDef, type ActionGroup } from './core/actions.js';
+import {
+  lookupSettings,
+  problemText,
+  SHORTCUT_SCHEMAS,
+  shortcutProblems,
+  type ShortcutProblem,
+} from './gnome-shortcuts.js';
 
 export default class GnometanglePreferences extends ExtensionPreferences {
   override fillPreferencesWindow(window: Adw.PreferencesWindow): Promise<void> {
@@ -218,6 +225,7 @@ function buildShortcutsPage(settings: Gio.Settings, window: Adw.PreferencesWindo
   page.add(top);
 
   const groups = new Map<ActionGroup, Adw.PreferencesGroup>();
+  const showProblems: Array<(problems: ReadonlyMap<string, ShortcutProblem>) => void> = [];
   for (const action of ACTIONS) {
     let group = groups.get(action.group);
     if (!group) {
@@ -225,13 +233,41 @@ function buildShortcutsPage(settings: Gio.Settings, window: Adw.PreferencesWindo
       groups.set(action.group, group);
       page.add(group);
     }
-    group.add(shortcutRow(settings, action, window));
+    const [row, showProblem] = shortcutRow(settings, action, window);
+    group.add(row);
+    showProblems.push(showProblem);
   }
+
+  // Recheck whenever our shortcuts or GNOME's change while the window is open.
+  const recheck = () => {
+    const problems = shortcutProblems(settings);
+    for (const show of showProblems) show(problems);
+  };
+  recheck();
+  const watched = [
+    settings,
+    ...[...SHORTCUT_SCHEMAS, 'org.gnome.settings-daemon.plugins.media-keys'].flatMap((id) => lookupSettings(id) ?? []),
+  ];
+  const handlers = watched.map((watchedSettings) => watchedSettings.connect('changed', recheck));
+  page.connect('destroy', () => watched.forEach((watchedSettings, i) => watchedSettings.disconnect(handlers[i]!)));
   return page;
 }
 
-function shortcutRow(settings: Gio.Settings, action: ActionDef, window: Adw.PreferencesWindow): Adw.ActionRow {
+function shortcutRow(
+  settings: Gio.Settings,
+  action: ActionDef,
+  window: Adw.PreferencesWindow,
+): [Adw.ActionRow, (problems: ReadonlyMap<string, ShortcutProblem>) => void] {
   const row = new Adw.ActionRow({ title: _(action.label), activatable: true });
+  // Offers a rebind: the reason is in the tooltip, and clicking opens the shortcut recorder.
+  const warning = new Gtk.Button({
+    icon_name: 'dialog-warning-symbolic',
+    valign: Gtk.Align.CENTER,
+    css_classes: ['flat', 'warning'],
+    visible: false,
+  });
+  warning.connect('clicked', () => captureShortcut(settings, action, window));
+  row.add_suffix(warning);
   const label = new Gtk.ShortcutLabel({ disabled_text: _('Disabled'), valign: Gtk.Align.CENTER });
   const reset = new Gtk.Button({
     icon_name: 'edit-undo-symbolic',
@@ -253,7 +289,13 @@ function shortcutRow(settings: Gio.Settings, action: ActionDef, window: Adw.Pref
 
   reset.connect('clicked', () => settings.reset(action.id));
   row.connect('activated', () => captureShortcut(settings, action, window));
-  return row;
+
+  const showProblem = (problems: ReadonlyMap<string, ShortcutProblem>) => {
+    const problem = problems.get(action.id);
+    warning.set_visible(problem !== undefined);
+    if (problem) warning.set_tooltip_text(`${problemText(problem, _)}\n${_('Click to choose other keys.')}`);
+  };
+  return [row, showProblem];
 }
 
 function captureShortcut(settings: Gio.Settings, action: ActionDef, window: Adw.PreferencesWindow): void {
