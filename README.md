@@ -23,6 +23,11 @@
 Press a shortcut and the focused window jumps to a half, third, fourth or corner of its screen, maximizes, centers,
 or moves to another monitor. Works on Wayland and X11.
 
+GNOME's built-in tiling covers halves and maximize, and that works well on a typical laptop screen. On wide and
+ultrawide monitors, two halves leave each window too wide to read or code in comfortably. Gnometangle adds the
+layouts that make that space useful, like thirds, fourths, a centered window and corners, all reachable from the
+keyboard. It's meant to build on what GNOME already does well.
+
 Targets GNOME Shell 45 through 50. An end-to-end test runs on GNOME 46, 49 and 50 under Wayland in CI for every
 change, and has also passed on GNOME 48. GNOME 45 and 47 are expected to work but are not tested yet.
 
