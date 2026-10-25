@@ -1,6 +1,5 @@
 import Gio from 'gi://Gio';
-import Meta from 'gi://Meta';
-import Shell from 'gi://Shell';
+import type Meta from 'gi://Meta';
 
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
@@ -8,6 +7,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { acceleratorSet } from './core/accelerators.js';
 import { ACTIONS, SETTINGS, type ActionId } from './core/actions.js';
 import { Indicator } from './indicator.js';
+import { Keybindings } from './keybindings.js';
 import { applyOverrides, restoreOverrides } from './overrides.js';
 import { Snapper } from './snapper.js';
 import { WindowMover } from './window.js';
@@ -18,6 +18,7 @@ export default class GnometangleExtension extends Extension {
   private settings: Gio.Settings | null = null;
   private mover: WindowMover | null = null;
   private snapper: Snapper | null = null;
+  private keybindings: Keybindings | null = null;
   private settingsHandlers: number[] = [];
   private indicator: Indicator | null = null;
 
@@ -28,11 +29,7 @@ export default class GnometangleExtension extends Extension {
 
     this.syncOverrides();
 
-    for (const action of ACTIONS) {
-      Main.wm.addKeybinding(action.id, this.settings, Meta.KeyBindingFlags.NONE, Shell.ActionMode.NORMAL, () =>
-        this.run(action.id),
-      );
-    }
+    this.keybindings = new Keybindings(this.settings, (action) => this.run(action));
 
     this.settingsHandlers = [
       this.settings.connect('changed', (_settings: Gio.Settings, key: string) => {
@@ -46,7 +43,8 @@ export default class GnometangleExtension extends Extension {
   override disable(): void {
     this.indicator?.destroy();
     this.indicator = null;
-    for (const action of ACTIONS) Main.wm.removeKeybinding(action.id);
+    this.keybindings?.destroy();
+    this.keybindings = null;
     this.mover?.destroy();
     this.mover = null;
     this.snapper = null;

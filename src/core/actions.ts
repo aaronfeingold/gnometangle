@@ -2,7 +2,9 @@
 // shortcuts and what it does. The GSettings schema is generated from this list at build time.
 // This module must stay free of imports so the build script can evaluate it.
 
-export type ActionGroup = 'halves' | 'corners' | 'thirds' | 'fourths' | 'size' | 'display';
+export type ActionGroup = 'halves' | 'corners' | 'thirds' | 'fourths' | 'size' | 'move' | 'display';
+
+export type Edge = 'left' | 'right' | 'top' | 'bottom';
 
 /** A region expressed as fractions of a work area, from 0 to 1 on each axis. */
 export interface Region {
@@ -27,7 +29,10 @@ export type ActionBehavior =
       readonly majorAxis?: boolean;
     }
   | { readonly kind: 'almost-maximize' | 'maximize-height' | 'center' | 'restore' }
-  | { readonly kind: 'resize'; readonly grow: boolean }
+  /** Grows or shrinks by the resize step; `axis` limits it to one dimension. */
+  | { readonly kind: 'resize'; readonly grow: boolean; readonly axis?: 'width' | 'height' }
+  /** Slides to an edge of the work area without resizing. */
+  | { readonly kind: 'move'; readonly edge: Edge }
   | { readonly kind: 'display'; readonly direction: 1 | -1 };
 
 export interface ActionDef {
@@ -145,10 +150,10 @@ export const ACTIONS = [
     behavior: segment(1 / 3, 1),
   },
 
-  { id: 'first-fourth', label: 'First Fourth', group: 'fourths', defaults: [], behavior: segment(0, 0.25) },
-  { id: 'second-fourth', label: 'Second Fourth', group: 'fourths', defaults: [], behavior: segment(0.25, 0.5) },
-  { id: 'third-fourth', label: 'Third Fourth', group: 'fourths', defaults: [], behavior: segment(0.5, 0.75) },
-  { id: 'last-fourth', label: 'Last Fourth', group: 'fourths', defaults: [], behavior: segment(0.75, 1) },
+  { id: 'first-fourth', label: 'First Fourth', group: 'fourths', defaults: [`${CA}1`], behavior: segment(0, 0.25) },
+  { id: 'second-fourth', label: 'Second Fourth', group: 'fourths', defaults: [`${CA}2`], behavior: segment(0.25, 0.5) },
+  { id: 'third-fourth', label: 'Third Fourth', group: 'fourths', defaults: [`${CA}3`], behavior: segment(0.5, 0.75) },
+  { id: 'last-fourth', label: 'Last Fourth', group: 'fourths', defaults: [`${CA}4`], behavior: segment(0.75, 1) },
   {
     id: 'first-three-fourths',
     label: 'First Three Fourths',
@@ -206,8 +211,41 @@ export const ACTIONS = [
     defaults: [`${CA}equal`],
     behavior: { kind: 'resize', grow: true },
   },
+  {
+    id: 'smaller-width',
+    label: 'Smaller Width',
+    group: 'size',
+    defaults: [],
+    behavior: { kind: 'resize', grow: false, axis: 'width' },
+  },
+  {
+    id: 'larger-width',
+    label: 'Larger Width',
+    group: 'size',
+    defaults: [],
+    behavior: { kind: 'resize', grow: true, axis: 'width' },
+  },
+  {
+    id: 'smaller-height',
+    label: 'Smaller Height',
+    group: 'size',
+    defaults: [],
+    behavior: { kind: 'resize', grow: false, axis: 'height' },
+  },
+  {
+    id: 'larger-height',
+    label: 'Larger Height',
+    group: 'size',
+    defaults: [],
+    behavior: { kind: 'resize', grow: true, axis: 'height' },
+  },
   { id: 'center', label: 'Center', group: 'size', defaults: [`${CA}c`], behavior: { kind: 'center' } },
   { id: 'restore', label: 'Restore', group: 'size', defaults: [`${CA}BackSpace`], behavior: { kind: 'restore' } },
+
+  { id: 'move-left', label: 'Move Left', group: 'move', defaults: [], behavior: { kind: 'move', edge: 'left' } },
+  { id: 'move-right', label: 'Move Right', group: 'move', defaults: [], behavior: { kind: 'move', edge: 'right' } },
+  { id: 'move-up', label: 'Move Up', group: 'move', defaults: [], behavior: { kind: 'move', edge: 'top' } },
+  { id: 'move-down', label: 'Move Down', group: 'move', defaults: [], behavior: { kind: 'move', edge: 'bottom' } },
 
   {
     id: 'next-display',
@@ -239,6 +277,7 @@ export const GROUP_LABELS: Record<ActionGroup, string> = {
   thirds: 'Thirds',
   fourths: 'Fourths',
   size: 'Size and Position',
+  move: 'Move',
   display: 'Displays',
 };
 
@@ -251,6 +290,7 @@ export const SETTINGS = {
   overrideConflicts: 'override-conflicts',
   overriddenShortcuts: 'overridden-shortcuts',
   showIndicator: 'show-indicator',
+  ignoredApps: 'ignored-apps',
 } as const;
 
 export const SCHEMA_ID = 'org.gnome.shell.extensions.gnometangle';

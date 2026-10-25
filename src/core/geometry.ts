@@ -1,4 +1,4 @@
-import { behaviorOf, type ActionId } from './actions.js';
+import { behaviorOf, type ActionId, type Edge } from './actions.js';
 import type { Rect, Region } from './types.js';
 
 export interface GeometryOptions {
@@ -115,28 +115,43 @@ function resizeAxis(
 }
 
 /**
- * Grows or shrinks a window by `step` on each side. Edges pinned to the work area stay
- * pinned, so a window snapped to the left half grows to the right.
+ * Grows or shrinks a window by `step` on each side, or only along `axis`. Edges pinned to the
+ * work area stay pinned, so a window snapped to the left half grows to the right.
  */
-export function resizeRect(rect: Rect, workArea: Rect, step: number, grow: boolean): Rect {
+export function resizeRect(rect: Rect, workArea: Rect, step: number, grow: boolean, axis?: 'width' | 'height'): Rect {
   const delta = grow ? step : -step;
-  const [x, width] = resizeAxis(
-    rect.x,
-    rect.width,
-    workArea.x,
-    workArea.width,
-    delta,
-    Math.round(workArea.width * MIN_SIZE_RATIO),
-  );
-  const [y, height] = resizeAxis(
-    rect.y,
-    rect.height,
-    workArea.y,
-    workArea.height,
-    delta,
-    Math.round(workArea.height * MIN_SIZE_RATIO),
-  );
+  const [x, width] =
+    axis === 'height'
+      ? [rect.x, rect.width]
+      : resizeAxis(rect.x, rect.width, workArea.x, workArea.width, delta, Math.round(workArea.width * MIN_SIZE_RATIO));
+  const [y, height] =
+    axis === 'width'
+      ? [rect.y, rect.height]
+      : resizeAxis(
+          rect.y,
+          rect.height,
+          workArea.y,
+          workArea.height,
+          delta,
+          Math.round(workArea.height * MIN_SIZE_RATIO),
+        );
   return { x, y, width, height };
+}
+
+/** Slides a window against one edge of the work area, a gap away from it, keeping its size. */
+export function moveToEdge(rect: Rect, workArea: Rect, edge: Edge, gap: number): Rect {
+  const inner = applyGap(workArea, workArea, gap);
+  const r = clampToWorkArea(rect, inner);
+  switch (edge) {
+    case 'left':
+      return { ...r, x: inner.x };
+    case 'right':
+      return { ...r, x: inner.x + inner.width - r.width };
+    case 'top':
+      return { ...r, y: inner.y };
+    case 'bottom':
+      return { ...r, y: inner.y + inner.height - r.height };
+  }
 }
 
 /** Maps a rect from one work area to another, keeping its relative position and size. */
@@ -197,7 +212,9 @@ export function computeTarget(action: ActionId, ctx: GeometryContext, cycle = tr
       return { x: current.x, y: workArea.y + g, width: current.width, height: workArea.height - 2 * g };
     }
     case 'resize':
-      return resizeRect(current, workArea, ctx.sizeStep, behavior.grow);
+      return resizeRect(current, workArea, ctx.sizeStep, behavior.grow, behavior.axis);
+    case 'move':
+      return moveToEdge(current, workArea, behavior.edge, gap);
     case 'center':
       return centerRect(current, workArea);
     default:

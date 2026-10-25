@@ -42,6 +42,7 @@ src/core/          Pure TypeScript with no GNOME imports: actions, geometry, cyc
                    Everything here is unit tested with Vitest.
 src/extension.ts   Enable and disable: settings, keybindings, the top bar icon and overrides.
 src/snapper.ts     Runs actions on windows, with the per-window history for cycling and restore.
+src/keybindings.ts Registers the shortcuts, and unregisters them while an ignored app has focus.
 src/window.ts      Reads window frames and work areas, and moves windows through Mutter.
 src/indicator.ts   Top bar icon and menu: every action with its shortcut, plus "Customize Shortcuts…".
 src/overrides.ts   Saves, removes and restores conflicting GNOME shortcuts.

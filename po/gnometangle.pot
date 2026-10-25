@@ -75,43 +75,69 @@ msgid ""
 "window up a workspace. Turning this off puts them back."
 msgstr ""
 
-#: src/prefs.ts:96
+#: src/prefs.ts:110
+msgid "Ignored Apps"
+msgstr ""
+
+#: src/prefs.ts:112
+msgid ""
+"Gnometangle's shortcuts are turned off while one of these apps has focus, so "
+"the app gets those keys. The top bar menu still works."
+msgstr ""
+
+#: src/prefs.ts:117 src/prefs.ts:163
+msgid "Add App"
+msgstr ""
+
+#: src/prefs.ts:139
+msgid "Remove"
+msgstr ""
+
+#: src/prefs.ts:152
+msgid "No ignored apps"
+msgstr ""
+
+#: src/prefs.ts:169
+msgid "Search apps"
+msgstr ""
+
+#: src/prefs.ts:208
 msgid "Shortcuts"
 msgstr ""
 
-#: src/prefs.ts:99
+#: src/prefs.ts:211
 msgid ""
 "Select a shortcut to change it. Press Backspace in the dialog to disable it."
 msgstr ""
 
-#: src/prefs.ts:101
+#: src/prefs.ts:213
 msgid "Reset All"
 msgstr ""
 
-#: src/prefs.ts:123
+#: src/prefs.ts:235
 msgid "Disabled"
 msgstr ""
 
-#: src/prefs.ts:126
+#: src/prefs.ts:238
 msgid "Reset to default"
 msgstr ""
 
-#: src/prefs.ts:149
+#: src/prefs.ts:261
 msgid "Set Shortcut"
 msgstr ""
 
 #. Translators: %s is an action name, such as "Left Half".
-#: src/prefs.ts:164
+#: src/prefs.ts:276
 #, javascript-format
 msgid "Press a new shortcut for %s"
 msgstr ""
 
-#: src/prefs.ts:167
+#: src/prefs.ts:279
 msgid "Esc to cancel, Backspace to disable"
 msgstr ""
 
 #. Translators: %s is an action name, such as "Left Half".
-#: src/prefs.ts:196
+#: src/prefs.ts:308
 #, javascript-format
 msgid "Removed the same shortcut from %s"
 msgstr ""
@@ -134,6 +160,10 @@ msgstr ""
 
 #: src/core/actions.ts
 msgid "Size and Position"
+msgstr ""
+
+#: src/core/actions.ts
+msgid "Move"
 msgstr ""
 
 #: src/core/actions.ts
@@ -249,11 +279,43 @@ msgid "Make Larger"
 msgstr ""
 
 #: src/core/actions.ts
+msgid "Smaller Width"
+msgstr ""
+
+#: src/core/actions.ts
+msgid "Larger Width"
+msgstr ""
+
+#: src/core/actions.ts
+msgid "Smaller Height"
+msgstr ""
+
+#: src/core/actions.ts
+msgid "Larger Height"
+msgstr ""
+
+#: src/core/actions.ts
 msgid "Center"
 msgstr ""
 
 #: src/core/actions.ts
 msgid "Restore"
+msgstr ""
+
+#: src/core/actions.ts
+msgid "Move Left"
+msgstr ""
+
+#: src/core/actions.ts
+msgid "Move Right"
+msgstr ""
+
+#: src/core/actions.ts
+msgid "Move Up"
+msgstr ""
+
+#: src/core/actions.ts
+msgid "Move Down"
 msgstr ""
 
 #: src/core/actions.ts

@@ -6,6 +6,7 @@ import {
   centerRect,
   computeTarget,
   mapToWorkArea,
+  moveToEdge,
   moveToWorkArea,
   rectsClose,
   regionFor,
@@ -215,5 +216,53 @@ describe('rectsClose', () => {
   it('tolerates small differences such as terminal size increments', () => {
     expect(rectsClose(WINDOW, { ...WINDOW, width: WINDOW.width - 7 })).toBe(true);
     expect(rectsClose(WINDOW, { ...WINDOW, x: WINDOW.x + 200 })).toBe(false);
+  });
+});
+
+describe('width and height only', () => {
+  it('resizes one dimension and leaves the other alone', () => {
+    expect(target('larger-width')).toEqual({ x: 70, y: 100, width: 860, height: 600 });
+    expect(target('smaller-width')).toEqual({ x: 130, y: 100, width: 740, height: 600 });
+    expect(target('larger-height')).toEqual({ x: 100, y: 70, width: 800, height: 660 });
+    expect(target('smaller-height')).toEqual({ x: 100, y: 130, width: 800, height: 540 });
+  });
+
+  it('keeps pinned edges pinned', () => {
+    const left = target('left-half')!;
+    expect(resizeRect(left, WA, 30, true, 'width')).toEqual({ x: 0, y: 32, width: 1020, height: 1048 });
+    expect(resizeRect(left, WA, 30, false, 'height')).toEqual({ x: 0, y: 62, width: 960, height: 988 });
+  });
+});
+
+describe('move to an edge', () => {
+  it('slides to each edge without resizing', () => {
+    expect(target('move-left')).toEqual({ x: 0, y: 100, width: 800, height: 600 });
+    expect(target('move-right')).toEqual({ x: 1120, y: 100, width: 800, height: 600 });
+    expect(target('move-up')).toEqual({ x: 100, y: 32, width: 800, height: 600 });
+    expect(target('move-down')).toEqual({ x: 100, y: 480, width: 800, height: 600 });
+  });
+
+  it('stays a gap away from the edge', () => {
+    expect(target('move-left', { gap: 10 })).toEqual({ x: 10, y: 100, width: 800, height: 600 });
+    expect(target('move-down', { gap: 10 })).toEqual({ x: 100, y: 470, width: 800, height: 600 });
+  });
+
+  it('pulls a window that hangs off the screen back inside', () => {
+    const offscreen: Rect = { x: -300, y: 900, width: 800, height: 600 };
+    expect(moveToEdge(offscreen, WA, 'top', 0)).toEqual({ x: 0, y: 32, width: 800, height: 600 });
+    expect(moveToEdge({ ...offscreen, width: 5000 }, WA, 'left', 0)).toEqual({
+      x: 0,
+      y: 480,
+      width: 1920,
+      height: 600,
+    });
+  });
+});
+
+describe('fourths', () => {
+  it('have Ctrl+Alt+1 to 4 as defaults', () => {
+    const fourths = ['first-fourth', 'second-fourth', 'third-fourth', 'last-fourth'];
+    const defaults = fourths.map((id) => ACTIONS.find((a) => a.id === id)!.defaults);
+    expect(defaults).toEqual([['<Control><Alt>1'], ['<Control><Alt>2'], ['<Control><Alt>3'], ['<Control><Alt>4']]);
   });
 });
