@@ -89,7 +89,7 @@ check "extension enabled" "1 " "$(ev "$EXT.state + ' ' + ($EXT.error || '')")"
 check "every shortcut registered" "" "$(ev "(() => {
   const s = $EXT.stateObj.settings;
   return s.settings_schema.list_keys()
-    .filter(k => s.get_value(k).get_type_string() === 'as' && !(k in Main.wm._allowedKeybindings))
+    .filter(k => s.get_value(k).get_type_string() === 'as' && k !== 'ignored-apps' && !(k in Main.wm._allowedKeybindings))
     .join(',');
 })()")"
 check "GNOME shortcuts untouched by default" "$original_shortcuts" \
@@ -141,6 +141,10 @@ check "right half" "$((wx + ww - half)),$wy,$half,$wh" "$(run right-half)"
 check "top left" "$wx,$wy,$half,$((wh / 2))" "$(run top-left)"
 check "maximize" "$wx,$wy,$ww,$wh" "$(run maximize-window)"
 check "restore" "$original" "$(run restore)"
+IFS=, read -r _ oy ow oh <<<"$original"
+check "move left keeps the size" "$wx,$oy,$ow,$oh" "$(run move-left)"
+ev "$EXT.stateObj.run('restore')" >/dev/null
+sleep 0.4
 
 # Snapping a window that GNOME itself maximized must unmaximize it first (API differs by version).
 ev "(() => { const w = global.display.get_focus_window(); typeof w.is_maximized === 'function' ? w.maximize() : w.maximize(3); return 1; })()" >/dev/null
@@ -186,10 +190,28 @@ check "Ctrl+Alt+Enter key press" "$wx,$wy,$ww,$wh" "$(ev "$FRAME")"
 ev "$EXT.stateObj.run('restore')" >/dev/null
 sleep 0.4
 
-# Top bar menu: one submenu per group, then a separator and "Customize Shortcuts…".
+# An ignored app gets the keys: our shortcuts are unregistered while it has focus. Removing a
+# keybinding leaves it in _allowedKeybindings with ActionMode.NONE (0).
+LEFT_ALLOWED="(Main.wm._allowedKeybindings['left-half'] ?? 0) !== 0"
+smoke_app=$(ev "imports.gi.Shell.WindowTracker.get_default().get_window_app(global.display.get_focus_window()).get_id()")
+ev "$EXT.stateObj.settings.set_strv('ignored-apps', ['$smoke_app'])" >/dev/null
+sleep 0.5
+check "ignored app unregisters the shortcuts" "false" "$(ev "$LEFT_ALLOWED")"
+ev "$EXT.stateObj.run('center')" >/dev/null
+sleep 0.4
+centered=$(ev "$FRAME")
+press 29,56,105
+check "ignored app keeps Ctrl+Alt+Left" "$centered" "$(ev "$FRAME")"
+ev "$EXT.stateObj.settings.set_strv('ignored-apps', [])" >/dev/null
+sleep 0.5
+check "shortcuts return when no longer ignored" "true" "$(ev "$LEFT_ALLOWED")"
+ev "$EXT.stateObj.run('restore')" >/dev/null
+sleep 0.4
+
+# Top bar menu: one submenu per group (7), then a separator and "Customize Shortcuts…".
 IND="Main.panel.statusArea['$UUID']"
 check "top bar icon shown" "true" "$(ev "!!$IND")"
-check "top bar menu items" "8" "$(ev "$IND.menu._getMenuItems().length")"
+check "top bar menu items" "9" "$(ev "$IND.menu._getMenuItems().length")"
 check "menu shows the shortcut" "Left Half Ctrl+Alt+Left" \
   "$(ev "(() => { const i = $IND.menu._getMenuItems()[0].menu._getMenuItems()[0];
     return i.label.text + ' ' + i.get_children().filter(c => c instanceof imports.gi.St.Label).pop().text.replace('←', 'Left'); })()")"

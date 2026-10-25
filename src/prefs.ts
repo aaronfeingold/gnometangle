@@ -14,7 +14,7 @@ export default class GnometanglePreferences extends ExtensionPreferences {
     window.set_default_size(640, 720);
     // Shortcuts first: the top bar menu's "Customize Shortcuts…" opens this window.
     window.add(buildShortcutsPage(settings, window));
-    window.add(buildGeneralPage(settings));
+    window.add(buildGeneralPage(settings, window));
     return Promise.resolve();
   }
 }
@@ -33,7 +33,7 @@ function switchRow(settings: Gio.Settings, key: string, title: string, subtitle:
   return row;
 }
 
-function buildGeneralPage(settings: Gio.Settings): Adw.PreferencesPage {
+function buildGeneralPage(settings: Gio.Settings, window: Adw.PreferencesWindow): Adw.PreferencesPage {
   const page = new Adw.PreferencesPage({ title: _('General'), icon_name: 'preferences-system-symbolic' });
 
   const layout = new Adw.PreferencesGroup({ title: _('Layout') });
@@ -88,8 +88,120 @@ function buildGeneralPage(settings: Gio.Settings): Adw.PreferencesPage {
     ),
   );
   page.add(behavior);
+  page.add(buildIgnoredAppsGroup(settings, window));
 
   return page;
+}
+
+const visibleApps = () =>
+  Gio.AppInfo.get_all()
+    .filter((app) => app.should_show() && app.get_id())
+    .sort((a, b) => a.get_display_name().localeCompare(b.get_display_name()));
+
+function appRow(title: string, icon: Gio.Icon | null, props: Partial<Adw.ActionRow.ConstructorProps> = {}) {
+  const row = new Adw.ActionRow({ title, ...props });
+  if (icon) row.add_prefix(new Gtk.Image({ gicon: icon, pixel_size: 32 }));
+  return row;
+}
+
+function buildIgnoredAppsGroup(settings: Gio.Settings, window: Adw.PreferencesWindow): Adw.PreferencesGroup {
+  const key = SETTINGS.ignoredApps;
+  const group = new Adw.PreferencesGroup({
+    title: _('Ignored Apps'),
+    description: _(
+      "Gnometangle's shortcuts are turned off while one of these apps has focus, so the app gets those keys. The top bar menu still works.",
+    ),
+  });
+  const add = new Gtk.Button({
+    icon_name: 'list-add-symbolic',
+    tooltip_text: _('Add App'),
+    valign: Gtk.Align.CENTER,
+    css_classes: ['flat'],
+  });
+  add.connect('clicked', () =>
+    chooseApp(window, (id) => {
+      const ids = settings.get_strv(key);
+      if (!ids.includes(id)) settings.set_strv(key, [...ids, id]);
+    }),
+  );
+  group.set_header_suffix(add);
+
+  let rows: Adw.ActionRow[] = [];
+  const refresh = () => {
+    for (const row of rows) group.remove(row);
+    const apps = new Map(visibleApps().map((app) => [app.get_id(), app]));
+    const ids = settings.get_strv(key);
+    rows = ids.map((id) => {
+      const app = apps.get(id);
+      const row = appRow(app?.get_display_name() ?? id, app?.get_icon() ?? null, { subtitle: id });
+      const remove = new Gtk.Button({
+        icon_name: 'user-trash-symbolic',
+        tooltip_text: _('Remove'),
+        valign: Gtk.Align.CENTER,
+        css_classes: ['flat'],
+      });
+      remove.connect('clicked', () =>
+        settings.set_strv(
+          key,
+          settings.get_strv(key).filter((other) => other !== id),
+        ),
+      );
+      row.add_suffix(remove);
+      return row;
+    });
+    if (rows.length === 0) rows = [new Adw.ActionRow({ title: _('No ignored apps'), css_classes: ['dim-label'] })];
+    for (const row of rows) group.add(row);
+  };
+  refresh();
+  const handler = settings.connect(`changed::${key}`, refresh);
+  group.connect('destroy', () => settings.disconnect(handler));
+  return group;
+}
+
+function chooseApp(window: Adw.PreferencesWindow, onChosen: (id: string) => void): void {
+  const dialog = new Gtk.Window({
+    title: _('Add App'),
+    modal: true,
+    transient_for: window,
+    default_width: 420,
+    default_height: 520,
+  });
+  const search = new Gtk.SearchEntry({ placeholder_text: _('Search apps') });
+  const list = new Gtk.ListBox({ selection_mode: Gtk.SelectionMode.NONE, css_classes: ['boxed-list'] });
+  for (const app of visibleApps()) {
+    const row = appRow(app.get_display_name(), app.get_icon(), { activatable: true });
+    row.connect('activated', () => {
+      onChosen(app.get_id()!);
+      dialog.close();
+    });
+    list.append(row);
+  }
+  list.set_filter_func((row) =>
+    (row as Adw.ActionRow).title.toLowerCase().includes(search.get_text().trim().toLowerCase()),
+  );
+  search.connect('search-changed', () => list.invalidate_filter());
+
+  const box = new Gtk.Box({
+    orientation: Gtk.Orientation.VERTICAL,
+    spacing: 12,
+    margin_top: 12,
+    margin_bottom: 12,
+    margin_start: 12,
+    margin_end: 12,
+  });
+  box.append(search);
+  box.append(new Gtk.ScrolledWindow({ child: list, vexpand: true, hscrollbar_policy: Gtk.PolicyType.NEVER }));
+  dialog.set_child(box);
+
+  const keys = new Gtk.EventControllerKey();
+  keys.connect('key-pressed', (_c: Gtk.EventControllerKey, keyval: number) => {
+    if (keyval !== Gdk.KEY_Escape) return false;
+    dialog.close();
+    return true;
+  });
+  dialog.add_controller(keys);
+  dialog.present();
+  search.grab_focus();
 }
 
 function buildShortcutsPage(settings: Gio.Settings, window: Adw.PreferencesWindow): Adw.PreferencesPage {

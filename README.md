@@ -48,14 +48,16 @@ preferences window.
 | First / Center / Last third                       | Ctrl+Alt+D / F / G          |
 | First / Last two thirds                           | Ctrl+Alt+E / T              |
 | Center two thirds                                 | unset                       |
-| First / Second / Third / Last fourth              | unset                       |
+| First / Second / Third / Last fourth              | Ctrl+Alt+1 / 2 / 3 / 4      |
 | First / Center / Last three fourths               | unset                       |
 | Maximize                                          | Ctrl+Alt+Enter              |
 | Almost maximize                                   | unset                       |
 | Maximize height                                   | Ctrl+Alt+Shift+Up           |
 | Make smaller / Make larger                        | Ctrl+Alt+Minus / Equal      |
+| Smaller / Larger width, Smaller / Larger height   | unset                       |
 | Center                                            | Ctrl+Alt+C                  |
 | Restore                                           | Ctrl+Alt+Backspace          |
+| Move left / right / up / down                     | unset                       |
 | Next / Previous display                           | Ctrl+Alt+Super+Right / Left |
 
 Behaviour borrowed from Rectangle:
@@ -66,6 +68,8 @@ Behaviour borrowed from Rectangle:
 - Restore puts the window back where it was before the first snap.
 - Moving to another display keeps a snapped window's layout and a floating window's size.
 - Make larger and make smaller keep edges that touch the screen pinned, so a left-half window grows to the right.
+  The width and height versions do the same along one axis.
+- Move left, right, up and down slide the window to that edge of the screen without resizing it.
 
 ## Customize shortcuts
 
@@ -93,6 +97,8 @@ Open them from the top bar menu (**Customize Shortcuts…**) or with
 - Almost maximize size (90 percent by default).
 - Resize step for make larger and make smaller.
 - Opinionated overrides (off by default), described below.
+- Ignored apps: while one of them has focus, Gnometangle's shortcuts are turned off so the app gets those keys.
+  The top bar menu still works on its windows.
 
 ## Opinionated overrides
 
