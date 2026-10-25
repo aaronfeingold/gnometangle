@@ -395,3 +395,43 @@ msgstr ""
 #: src/core/actions.ts
 msgid "Previous Display"
 msgstr ""
+
+#: src/core/actions.ts
+msgid "Display on the Left"
+msgstr ""
+
+#: src/core/actions.ts
+msgid "Display on the Right"
+msgstr ""
+
+#: src/core/actions.ts
+msgid "Display Above"
+msgstr ""
+
+#: src/core/actions.ts
+msgid "Display Below"
+msgstr ""
+
+#: src/core/actions.ts
+msgid "Display 1"
+msgstr ""
+
+#: src/core/actions.ts
+msgid "Display 2"
+msgstr ""
+
+#: src/core/actions.ts
+msgid "Display 3"
+msgstr ""
+
+#: src/core/actions.ts
+msgid "Focus Next Display"
+msgstr ""
+
+#: src/core/actions.ts
+msgid "Focus Previous Display"
+msgstr ""
+
+#: src/core/actions.ts
+msgid "Identify Displays"
+msgstr ""

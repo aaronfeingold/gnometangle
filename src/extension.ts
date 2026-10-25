@@ -6,6 +6,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import { acceleratorSet } from './core/accelerators.js';
 import { ACTIONS, SETTINGS, type ActionId } from './core/actions.js';
+import { DisplayIdentifier } from './identify.js';
 import { Indicator } from './indicator.js';
 import { Keybindings } from './keybindings.js';
 import { applyOverrides, restoreOverrides } from './overrides.js';
@@ -19,13 +20,16 @@ export default class GnometangleExtension extends Extension {
   private mover: WindowMover | null = null;
   private snapper: Snapper | null = null;
   private keybindings: Keybindings | null = null;
+  private identifier: DisplayIdentifier | null = null;
   private settingsHandlers: number[] = [];
   private indicator: Indicator | null = null;
 
   override enable(): void {
     this.settings = this.getSettings();
     this.mover = new WindowMover();
-    this.snapper = new Snapper(this.settings, this.mover);
+    this.identifier = new DisplayIdentifier();
+    const identifier = this.identifier;
+    this.snapper = new Snapper(this.settings, this.mover, (monitors) => identifier.show(monitors));
 
     this.syncOverrides();
 
@@ -45,6 +49,8 @@ export default class GnometangleExtension extends Extension {
     this.indicator = null;
     this.keybindings?.destroy();
     this.keybindings = null;
+    this.identifier?.destroy();
+    this.identifier = null;
     this.mover?.destroy();
     this.mover = null;
     this.snapper = null;

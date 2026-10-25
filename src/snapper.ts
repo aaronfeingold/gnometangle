@@ -7,9 +7,10 @@ import Meta from 'gi://Meta';
 import { SETTINGS, behaviorOf, type ActionId } from './core/actions.js';
 import { nextHistory, type WindowHistory } from './core/cycle.js';
 import { computeTarget, mapToWorkArea, moveToWorkArea, rectsClose } from './core/geometry.js';
-import { neighborMonitor } from './core/monitors.js';
+import { orderMonitors, resolveDisplay } from './core/monitors.js';
+import type { Rect } from './core/types.js';
 import { workspacePlan } from './core/workspaces.js';
-import type { WorkspaceTarget } from './core/actions.js';
+import type { DisplayTarget, WorkspaceTarget } from './core/actions.js';
 import { currentWorkArea, frameRect, toRect, type WindowMover } from './window.js';
 
 const SNAPPABLE_TYPES = new Set([Meta.WindowType.NORMAL, Meta.WindowType.DIALOG, Meta.WindowType.MODAL_DIALOG]);
@@ -20,20 +21,31 @@ export class Snapper {
   constructor(
     private readonly settings: Gio.Settings,
     private readonly mover: WindowMover,
+    /** Shows each display's number, in display order. */
+    private readonly identifyDisplays: (monitors: readonly number[]) => void,
   ) {}
 
   /** Runs an action on `win`, or on the focused window when called from a shortcut. */
   run(action: ActionId, win: Meta.Window | null = global.display.get_focus_window()): void {
     const settings = this.settings;
+    const behavior = behaviorOf(action);
+    // These work without a window.
+    if (behavior.kind === 'identify-displays') {
+      this.identifyDisplays(orderMonitors(monitorGeometries()));
+      return;
+    }
+    if (behavior.kind === 'focus-display') {
+      this.focusDisplay(behavior.target, win);
+      return;
+    }
     if (!win || !win.get_compositor_private() || !SNAPPABLE_TYPES.has(win.get_window_type())) return;
 
-    const behavior = behaviorOf(action);
     if (behavior.kind === 'restore') {
       this.restore(win);
       return;
     }
     if (behavior.kind === 'display') {
-      this.moveToDisplay(win, behavior.direction);
+      this.moveToDisplay(win, behavior.target);
       return;
     }
     if (behavior.kind === 'workspace') {
@@ -88,13 +100,24 @@ export class Snapper {
     if (this.settings.get_boolean(SETTINGS.workspaceFollow)) workspace.activate_with_focus(win, time);
   }
 
-  private moveToDisplay(win: Meta.Window, direction: 1 | -1): void {
-    const display = global.display;
-    const count = display.get_n_monitors();
-    if (count < 2) return;
-    const geometries = Array.from({ length: count }, (_, i) => toRect(display.get_monitor_geometry(i)));
+  /** Focuses the top window on the next or previous display, starting from `win`'s or the pointer's. */
+  private focusDisplay(target: 'next' | 'previous', win: Meta.Window | null): void {
+    const from = win?.get_monitor() ?? global.display.get_current_monitor();
+    const to = resolveDisplay(monitorGeometries(), from, target);
+    if (to === from) return;
+    const workspace = global.workspace_manager.get_active_workspace();
+    const candidates = workspace
+      .list_windows()
+      .filter((w) => w.get_monitor() === to && !w.minimized && SNAPPABLE_TYPES.has(w.get_window_type()));
+    const top = global.display.sort_windows_by_stacking(candidates).at(-1);
+    top?.activate(global.get_current_time());
+  }
+
+  private moveToDisplay(win: Meta.Window, displayTarget: DisplayTarget): void {
+    const geometries = monitorGeometries();
+    if (geometries.length < 2) return;
     const from = win.get_monitor();
-    const to = neighborMonitor(geometries, from, direction);
+    const to = resolveDisplay(geometries, from, displayTarget);
     if (to === from) return;
 
     const fromArea = toRect(win.get_work_area_for_monitor(from));
@@ -112,6 +135,14 @@ export class Snapper {
         restore: mapToWorkArea(entry.restore, fromArea, toArea),
       });
     }
+    // Mutter limits a resize to the monitor the window is on, which with mixed scales cuts a
+    // snapped window short on a larger display. Moving it onto the target monitor first avoids that.
+    win.move_to_monitor(to);
     this.mover.apply(win, target);
   }
+}
+
+function monitorGeometries(): Rect[] {
+  const display = global.display;
+  return Array.from({ length: display.get_n_monitors() }, (_, i) => toRect(display.get_monitor_geometry(i)));
 }
