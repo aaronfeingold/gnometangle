@@ -1,4 +1,4 @@
-import type { ActionId } from './actions.js';
+import { behaviorOf, type ActionId } from './actions.js';
 import type { Rect, Region } from './types.js';
 
 export interface GeometryOptions {
@@ -18,80 +18,19 @@ export interface GeometryContext extends GeometryOptions {
   repeat: number;
 }
 
-/** Sizes Rectangle cycles through when a half action is repeated. */
-export const HALF_CYCLE = [1 / 2, 2 / 3, 1 / 3] as const;
-
 /** Smallest size Make Smaller will shrink to, as a fraction of the work area. */
 export const MIN_SIZE_RATIO = 0.25;
 
-const FULL: Region = { x0: 0, x1: 1, y0: 0, y1: 1 };
-
-const span = (a: number, b: number): [number, number] => [a, b];
-
-/**
- * Segments for the "thirds" and "fourths" families along the major axis, so on a portrait
- * monitor thirds stack vertically like Rectangle does.
- */
-function segment(workArea: Rect, [a, b]: [number, number]): Region {
-  return workArea.height > workArea.width ? { x0: 0, x1: 1, y0: a, y1: b } : { x0: a, x1: b, y0: 0, y1: 1 };
-}
-
-const THIRDS = [span(0, 1 / 3), span(1 / 3, 2 / 3), span(2 / 3, 1)];
-
 /** Returns the region an action targets, or null when the action is not region based. */
 export function regionFor(action: ActionId, workArea: Rect, repeat: number, cycle = true): Region | null {
-  const i = cycle ? repeat : 0;
-  const half = HALF_CYCLE[i % HALF_CYCLE.length]!;
-  switch (action) {
-    case 'left-half':
-      return { x0: 0, x1: half, y0: 0, y1: 1 };
-    case 'right-half':
-      return { x0: 1 - half, x1: 1, y0: 0, y1: 1 };
-    case 'top-half':
-      return { x0: 0, x1: 1, y0: 0, y1: half };
-    case 'bottom-half':
-      return { x0: 0, x1: 1, y0: 1 - half, y1: 1 };
-    case 'center-half':
-      return { x0: 0.25, x1: 0.75, y0: 0, y1: 1 };
-    case 'top-left':
-      return { x0: 0, x1: 0.5, y0: 0, y1: 0.5 };
-    case 'top-right':
-      return { x0: 0.5, x1: 1, y0: 0, y1: 0.5 };
-    case 'bottom-left':
-      return { x0: 0, x1: 0.5, y0: 0.5, y1: 1 };
-    case 'bottom-right':
-      return { x0: 0.5, x1: 1, y0: 0.5, y1: 1 };
-    case 'first-third':
-      return segment(workArea, THIRDS[i % 3]!);
-    case 'center-third':
-      return segment(workArea, THIRDS[1]!);
-    case 'last-third':
-      return segment(workArea, THIRDS[2 - (i % 3)]!);
-    case 'first-two-thirds':
-      return segment(workArea, span(0, 2 / 3));
-    case 'center-two-thirds':
-      return segment(workArea, span(1 / 6, 5 / 6));
-    case 'last-two-thirds':
-      return segment(workArea, span(1 / 3, 1));
-    case 'first-fourth':
-      return segment(workArea, span(0, 0.25));
-    case 'second-fourth':
-      return segment(workArea, span(0.25, 0.5));
-    case 'third-fourth':
-      return segment(workArea, span(0.5, 0.75));
-    case 'last-fourth':
-      return segment(workArea, span(0.75, 1));
-    case 'first-three-fourths':
-      return segment(workArea, span(0, 0.75));
-    case 'center-three-fourths':
-      return segment(workArea, span(0.125, 0.875));
-    case 'last-three-fourths':
-      return segment(workArea, span(0.25, 1));
-    case 'maximize-window':
-      return FULL;
-    default:
-      return null;
+  const behavior = behaviorOf(action);
+  if (behavior.kind !== 'region') return null;
+  const { regions } = behavior;
+  const region = regions[(cycle ? repeat : 0) % regions.length]!;
+  if (behavior.majorAxis && workArea.height > workArea.width) {
+    return { x0: region.y0, x1: region.y1, y0: region.x0, y1: region.x1 };
   }
+  return region;
 }
 
 /** Converts a fractional region to pixels. Adjacent regions share edges exactly. */
@@ -241,7 +180,8 @@ export function computeTarget(action: ActionId, ctx: GeometryContext, cycle = tr
   const region = regionFor(action, workArea, ctx.repeat, cycle);
   if (region) return applyGap(regionToRect(region, workArea), workArea, gap);
 
-  switch (action) {
+  const behavior = behaviorOf(action);
+  switch (behavior.kind) {
     case 'almost-maximize': {
       const r = clamp(ctx.almostMaximizeRatio, 0.1, 1);
       const size = { x: 0, y: 0, width: Math.round(workArea.width * r), height: Math.round(workArea.height * r) };
@@ -251,10 +191,8 @@ export function computeTarget(action: ActionId, ctx: GeometryContext, cycle = tr
       const g = Math.max(0, gap);
       return { x: current.x, y: workArea.y + g, width: current.width, height: workArea.height - 2 * g };
     }
-    case 'make-smaller':
-      return resizeRect(current, workArea, ctx.sizeStep, false);
-    case 'make-larger':
-      return resizeRect(current, workArea, ctx.sizeStep, true);
+    case 'resize':
+      return resizeRect(current, workArea, ctx.sizeStep, behavior.grow);
     case 'center':
       return centerRect(current, workArea);
     default:

@@ -5,10 +5,5 @@ export interface Rect {
   height: number;
 }
 
-/** A region expressed as fractions of a work area, from 0 to 1 on each axis. */
-export interface Region {
-  x0: number;
-  x1: number;
-  y0: number;
-  y1: number;
-}
+// Defined next to the action table, which build.mjs evaluates and so can't import it from here.
+export type { Region } from './actions.js';

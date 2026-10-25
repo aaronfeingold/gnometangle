@@ -8,7 +8,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import { isMaximized, unmaximize } from './compat.js';
 import { acceleratorSet } from './core/accelerators.js';
-import { ACTIONS, SETTINGS, type ActionId } from './core/actions.js';
+import { ACTIONS, SETTINGS, behaviorOf, type ActionId } from './core/actions.js';
 import { nextHistory, type WindowHistory } from './core/cycle.js';
 import { computeTarget, mapToWorkArea, moveToWorkArea, rectsClose } from './core/geometry.js';
 import { neighborMonitor } from './core/monitors.js';
@@ -103,12 +103,13 @@ export default class GnometangleExtension extends Extension {
     const settings = this.settings;
     if (!settings || !win || !win.get_compositor_private() || !SNAPPABLE_TYPES.has(win.get_window_type())) return;
 
-    if (action === 'restore') {
+    const behavior = behaviorOf(action);
+    if (behavior.kind === 'restore') {
       this.restore(win);
       return;
     }
-    if (action === 'next-display' || action === 'previous-display') {
-      this.moveToDisplay(win, action === 'next-display' ? 1 : -1);
+    if (behavior.kind === 'display') {
+      this.moveToDisplay(win, behavior.direction);
       return;
     }
 

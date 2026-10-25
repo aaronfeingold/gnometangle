@@ -54,10 +54,12 @@ The GSettings schema is generated, so keys and defaults can't drift from the cod
 
 ### Adding an action
 
-1. Add one line to `ACTIONS` in `src/core/actions.ts`: id, label, group and default shortcuts (often none).
-   The id is also the GSettings key and the name Mutter registers the keybinding under, so it must not match a
-   GNOME keybinding name; `test/actions.test.ts` checks this.
-2. Handle it in `computeTarget` in `src/core/geometry.ts`, with unit tests in `test/geometry.test.ts`.
+1. Add an entry to `ACTIONS` in `src/core/actions.ts`: id, label, group, default shortcuts (often none) and
+   behavior. The id is also the GSettings key and the name Mutter registers the keybinding under, so it must not
+   match a GNOME keybinding name; `test/actions.test.ts` checks this.
+2. Most actions are a region: a fraction of the work area, or several to cycle through on repeat. If none of the
+   existing behavior kinds fits, add one to `ActionBehavior` and handle it in `computeTarget` in
+   `src/core/geometry.ts`. Either way, add unit tests in `test/geometry.test.ts`.
 3. Add a row to the shortcuts table in the README.
 
 The preferences window and the top bar menu pick it up automatically.

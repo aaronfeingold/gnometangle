@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { ACTIONS } from '../src/core/actions.js';
+import { ACTIONS, type ActionBehavior } from '../src/core/actions.js';
 
 // Keybinding names GNOME registers itself (org.gnome.desktop.wm.keybindings,
 // org.gnome.mutter[.wayland].keybindings, org.gnome.shell.keybindings), minus the numbered
@@ -94,5 +94,24 @@ describe('ACTIONS', () => {
 
   it('never reuses a built-in GNOME keybinding name', () => {
     expect(ACTIONS.map((a) => a.id).filter((id) => GNOME_KEYBINDINGS.includes(id))).toEqual([]);
+  });
+});
+
+describe('action behaviors', () => {
+  it('give every region action at least one region inside the work area', () => {
+    for (const action of ACTIONS) {
+      const behavior: ActionBehavior = action.behavior;
+      if (behavior.kind !== 'region') continue;
+      expect(behavior.regions.length, action.id).toBeGreaterThan(0);
+      for (const r of behavior.regions) {
+        expect(0 <= r.x0 && r.x0 < r.x1 && r.x1 <= 1 && 0 <= r.y0 && r.y0 < r.y1 && r.y1 <= 1, action.id).toBe(true);
+      }
+    }
+  });
+
+  it('cover restore and both display directions', () => {
+    const kinds = ACTIONS.map((a): ActionBehavior => a.behavior);
+    expect(kinds.filter((b) => b.kind === 'restore')).toHaveLength(1);
+    expect(kinds.flatMap((b) => (b.kind === 'display' ? [b.direction] : [])).sort()).toEqual([-1, 1]);
   });
 });
