@@ -4,3 +4,8 @@
   font-feature-settings: 'tnum';
   opacity: 0.6;
 }
+
+/* A shortcut that won't work: Mutter refused it, or something else uses the same keys. */
+.gnometangle-warning {
+  color: #f8e45c;
+}

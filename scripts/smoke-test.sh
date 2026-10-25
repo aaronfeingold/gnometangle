@@ -89,16 +89,28 @@ check "extension enabled" "1 " "$(ev "$EXT.state + ' ' + ($EXT.error || '')")"
 check "every shortcut registered" "" "$(ev "(() => {
   const s = $EXT.stateObj.settings;
   return s.settings_schema.list_keys()
-    .filter(k => s.get_value(k).get_type_string() === 'as' && k !== 'ignored-apps' && !(k in Main.wm._allowedKeybindings))
+    .filter(k => s.get_value(k).get_type_string() === 'as' && !['ignored-apps', 'unregistered-shortcuts'].includes(k) && !(k in Main.wm._allowedKeybindings))
     .join(',');
 })()")"
 check "GNOME shortcuts untouched by default" "$original_shortcuts" \
   "$(ev "$KB.get_strv('switch-to-workspace-left').join('|')")"
+# With the overrides off, Ctrl+Alt+Left is also GNOME's: the menu warns on Left Half and on its group.
+IND="Main.panel.statusArea['$UUID']"
+MENU_WARNING="(() => {
+  const halves = $IND.menu._getMenuItems()[0];
+  $IND.menu.open(false);
+  const item = halves.menu._getMenuItems()[0].get_children().find(c => c.has_style_class_name?.('gnometangle-warning'));
+  const result = [halves.icon.visible, item.visible].join(',');
+  $IND.menu.close(false);
+  return result;
+})()"
+check "menu warns about a shortcut GNOME also uses" "true,true" "$(ev "$MENU_WARNING")"
 # The rest of the run presses the default keys, so turn on the overrides that free them.
 ev "$EXT.stateObj.settings.set_boolean('override-conflicts', true)" >/dev/null
 sleep 0.5
 check "conflicting GNOME shortcut removed" "${original_shortcuts//|<Control><Alt>Left/}" \
   "$(ev "$KB.get_strv('switch-to-workspace-left').join('|')")"
+check "no warning once the override frees the keys" "false,false" "$(ev "$MENU_WARNING")"
 both_sides="$KB.get_strv('switch-to-workspace-left').join('|') + ' / ' + $KB.get_strv('switch-to-workspace-right').join('|')"
 overridden_sides=$(ev "$both_sides")
 ev "$EXT.stateObj.settings.set_strv('left-half', ['<Control><Alt>h'])" >/dev/null
@@ -209,7 +221,6 @@ ev "$EXT.stateObj.run('restore')" >/dev/null
 sleep 0.4
 
 # Top bar menu: one submenu per group (7), then a separator and "Customize Shortcuts…".
-IND="Main.panel.statusArea['$UUID']"
 check "top bar icon shown" "true" "$(ev "!!$IND")"
 check "top bar menu items" "9" "$(ev "$IND.menu._getMenuItems().length")"
 check "menu shows the shortcut" "Left Half Ctrl+Alt+Left" \
@@ -248,6 +259,16 @@ ev "Main.extensionManager.disableExtension('$UUID')" >/dev/null
 sleep 1
 check "GNOME shortcuts restored on disable" "$original_shortcuts" \
   "$(ev "$KB.get_strv('switch-to-workspace-left').join('|')")"
+
+# Mutter refuses a keybinding whose name is taken: take 'center' first, then enable again.
+ev "Main.wm.addKeybinding('center', $EXT.stateObj.getSettings(), imports.gi.Meta.KeyBindingFlags.NONE, imports.gi.Shell.ActionMode.NORMAL, () => {})" >/dev/null
+ev "Main.extensionManager.enableExtension('$UUID')" >/dev/null
+sleep 1
+check "refused keybinding is reported" "center" "$(ev "$EXT.stateObj.settings.get_strv('unregistered-shortcuts').join(',')")"
+check "refused keybinding is logged" "yes" "$(grep -q 'refused the keybindings for center' "$LOG" && echo yes || echo no)"
+ev "Main.extensionManager.disableExtension('$UUID')" >/dev/null
+check "disable leaves the other 'center' binding alone" "true" "$(ev "(Main.wm._allowedKeybindings['center'] ?? 0) !== 0")"
+ev "Main.wm.removeKeybinding('center')" >/dev/null
 
 if grep -q "JS ERROR" "$LOG" && grep -B2 -A8 "JS ERROR" "$LOG" | grep -q "$UUID"; then
   echo "FAIL  JavaScript errors from the extension:"

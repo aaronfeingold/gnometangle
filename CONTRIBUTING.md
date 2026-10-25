@@ -46,6 +46,7 @@ src/keybindings.ts Registers the shortcuts, and unregisters them while an ignore
 src/window.ts      Reads window frames and work areas, and moves windows through Mutter.
 src/indicator.ts   Top bar icon and menu: every action with its shortcut, plus "Customize Shortcuts…".
 src/overrides.ts   Saves, removes and restores conflicting GNOME shortcuts.
+src/gnome-shortcuts.ts  Reads GNOME's and custom shortcuts, and finds the ones that clash with ours.
 src/compat.ts      Window API differences between GNOME 45-48 and 49+.
 src/prefs.ts       Adwaita preferences window with a shortcut recorder.
 src/stylesheet.css Shell styles (top bar menu).

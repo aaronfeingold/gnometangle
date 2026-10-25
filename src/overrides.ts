@@ -12,20 +12,7 @@ import {
   type SavedOverrides,
   type ShortcutKey,
 } from './core/overrides.js';
-
-/** GNOME schemas whose string-array keys are keyboard shortcuts. */
-const SHORTCUT_SCHEMAS = [
-  'org.gnome.desktop.wm.keybindings',
-  'org.gnome.mutter.keybindings',
-  'org.gnome.mutter.wayland.keybindings',
-  'org.gnome.shell.keybindings',
-];
-
-function lookupSettings(schemaId: string): Gio.Settings | null {
-  const source = Gio.SettingsSchemaSource.get_default();
-  const schema = source?.lookup(schemaId, true);
-  return schema ? new Gio.Settings({ settings_schema: schema }) : null;
-}
+import { lookupSettings, SHORTCUT_SCHEMAS } from './gnome-shortcuts.js';
 
 function readSaved(settings: Gio.Settings): SavedOverrides {
   return parseSavedOverrides(settings.get_string(SETTINGS.overriddenShortcuts));
