@@ -17,7 +17,11 @@ export class DisplayIdentifier {
     this.hide();
     monitors.forEach((monitor, i) => {
       const geometry = global.display.get_monitor_geometry(monitor);
-      const label = new St.Label({ text: `${i + 1}`, style_class: 'gnometangle-identify', opacity: 0 });
+      const label = new St.Label({
+        text: `${i + 1}`,
+        style_class: 'gnometangle-identify',
+        opacity: 0,
+      });
       Main.layoutManager.uiGroup.add_child(label);
       label.set_position(
         geometry.x + Math.round((geometry.width - label.width) / 2),

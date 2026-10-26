@@ -120,3 +120,12 @@ export function releaseAccelerator(
   }
   return released;
 }
+
+/**
+ * Pango markup for a shortcut label, with the arrow keys enlarged: coding fonts such as
+ * JetBrains Mono draw arrows much smaller than letters.
+ */
+export function acceleratorMarkup(label: string): string {
+  const escaped = label.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return escaped.replace(/[←→↑↓]/g, '<span size="150%">$&</span>');
+}

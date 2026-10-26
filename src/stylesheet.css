@@ -1,8 +1,19 @@
-/* Shortcut shown at the right edge of each action in the top bar menu. */
+/* Shortcut shown at the right edge of each action in the top bar menu. Keys are set in a coding
+   font, JetBrains Mono when it is installed, so they read as keys; the rest keeps the shell's font.
+   Family names stay unquoted: St drops a font-family with two quoted names in a row. */
 .gnometangle-shortcut {
   margin-left: 2em;
-  font-feature-settings: 'tnum';
+  font-family:
+    JetBrainsMono Nerd Font,
+    JetBrains Mono,
+    monospace;
   opacity: 0.6;
+}
+
+/* Why a shortcut won't work, next to its keys. */
+.gnometangle-reason {
+  margin-left: 1em;
+  opacity: 0.8;
 }
 
 /* A shortcut that won't work: Mutter refused it, or something else uses the same keys. */
@@ -12,6 +23,10 @@
 
 /* Identify Displays: each display's number, shown in its middle for a moment. */
 .gnometangle-identify {
+  font-family:
+    JetBrainsMono Nerd Font,
+    JetBrains Mono,
+    monospace;
   font-size: 96pt;
   font-weight: bold;
   color: #ffffff;
