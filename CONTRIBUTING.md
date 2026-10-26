@@ -116,10 +116,14 @@ labels in `src/core/actions.ts` are translated where they are shown, since that 
 
 ## Releasing (maintainer)
 
-Bump `version` in `package.json` and merge that pull request. Then tag the merge commit on `main`:
+User-facing changes add a line under `## Unreleased` in `CHANGELOG.md` as they merge. To release, rename that
+heading to `## <version> (<date>)`, bump `version` in `package.json` to match, and merge that pull request. `pnpm check`
+fails if `package.json` names a version the changelog has no section for, and the release notes start with that
+section (`pnpm release-notes` prints them). Then tag the merge commit on `main` (`-m` makes an annotated tag, which
+git requires when tags are signed):
 
 ```sh
-git switch main && git pull && git tag v0.1.1 && git push origin v0.1.1
+git switch main && git pull && git tag -m v0.3.0 v0.3.0 && git push origin v0.3.0
 ```
 
 The release workflow refuses tags that aren't on `main` or don't match `package.json`. It runs the full checks,
