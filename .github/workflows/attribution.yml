@@ -1,0 +1,38 @@
+name: Attribution
+
+# Keeps AI tool attribution out of public history: no Co-Authored-By or Claude-Session trailers in commit messages,
+# and no "Generated with Claude Code" line, robot emoji or session link in pull request descriptions. A hidden HTML
+# comment marker is fine. Runs on every pull request, docs-only ones included, and again when the description is edited.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+concurrency:
+  group: attribution-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  attribution:
+    name: No visible AI attribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check commit messages
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: scripts/check-attribution.sh "$BASE..$HEAD"
+      - name: Check the pull request description
+        if: always()
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          printf '%s\n' "$BODY" > "$RUNNER_TEMP/body.md"
+          scripts/check-attribution.sh --body "$RUNNER_TEMP/body.md"
