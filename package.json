@@ -18,8 +18,9 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build",
-    "pot": "node scripts/pot.mjs"
+    "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build && pnpm release-notes --check",
+    "pot": "node scripts/pot.mjs",
+    "release-notes": "node scripts/release-notes.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

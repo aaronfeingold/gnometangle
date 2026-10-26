@@ -48,9 +48,11 @@ jobs:
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: '*.shell-extension.zip'
+      # The CHANGELOG.md section for this version goes first, then GitHub's list of merged PRs.
+      - run: pnpm --silent release-notes > release-notes.md
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: >-
           gh release create "$GITHUB_REF_NAME" ./*.shell-extension.zip SHA256SUMS
-          --verify-tag --generate-notes --title "$GITHUB_REF_NAME"
+          --verify-tag --generate-notes --notes-file release-notes.md --title "$GITHUB_REF_NAME"

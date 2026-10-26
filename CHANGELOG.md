@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- The release notes on GitHub start with this changelog's section for the version.
+
 ## 0.2.0 (2026-10-24)
 
 ### Upgrading
