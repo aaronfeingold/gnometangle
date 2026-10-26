@@ -7,6 +7,11 @@
 - The release notes on GitHub start with this changelog's section for the version.
 - README: how to get Mac-style Super+C / X / V copy, cut and paste everywhere with keyd.
 
+### Changed
+
+- The top bar menu and Identify Displays show keys in a coding font (JetBrains Mono when it's installed), with
+  the arrow keys drawn large enough to read. A shortcut's warning reason is a separate label in the normal font.
+
 ## 0.2.0 (2026-10-24)
 
 ### Upgrading

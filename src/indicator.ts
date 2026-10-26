@@ -8,7 +8,7 @@ import { gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.j
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
-import { acceleratorLabel } from './core/accelerators.js';
+import { acceleratorLabel, acceleratorMarkup } from './core/accelerators.js';
 import { ACTIONS, GROUP_LABELS, type ActionGroup, type ActionId } from './core/actions.js';
 import { problemText, shortcutProblems, type ShortcutProblem } from './gnome-shortcuts.js';
 
@@ -87,6 +87,12 @@ export class Indicator extends PanelMenu.Button {
       y_align: Clutter.ActorAlign.CENTER,
     });
     item.add_child(shortcut);
+    const reason = new St.Label({
+      style_class: 'gnometangle-reason',
+      y_align: Clutter.ActorAlign.CENTER,
+      visible: false,
+    });
+    item.add_child(reason);
     const warning = new St.Icon({
       icon_name: 'dialog-warning-symbolic',
       style_class: 'popup-menu-icon gnometangle-warning',
@@ -96,8 +102,9 @@ export class Indicator extends PanelMenu.Button {
 
     let problem: ShortcutProblem | undefined;
     const refresh = () => {
-      const keys = acceleratorLabel(this.settings.get_strv(id)[0] ?? '');
-      shortcut.text = problem ? `${keys}  ${problemText(problem, _)}` : keys;
+      shortcut.clutter_text.set_markup(acceleratorMarkup(acceleratorLabel(this.settings.get_strv(id)[0] ?? '')));
+      reason.text = problem ? problemText(problem, _) : '';
+      reason.visible = problem !== undefined;
       warning.visible = problem !== undefined;
     };
     refresh();

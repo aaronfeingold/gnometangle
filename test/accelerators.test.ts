@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   acceleratorLabel,
+  acceleratorMarkup,
   acceleratorSet,
   normalizeAccelerator,
   releaseAccelerator,
@@ -102,5 +103,16 @@ describe('releaseAccelerator', () => {
 
   it('returns nothing when no other action uses the keys', () => {
     expect(releaseAccelerator(shortcuts, 'center', '<Control><Alt>x').size).toBe(0);
+  });
+});
+
+describe('acceleratorMarkup', () => {
+  it('enlarges arrow keys', () => {
+    expect(acceleratorMarkup('Ctrl+Alt+←')).toBe('Ctrl+Alt+<span size="150%">←</span>');
+  });
+
+  it('escapes markup characters and leaves other keys alone', () => {
+    expect(acceleratorMarkup('Ctrl+Alt+<')).toBe('Ctrl+Alt+&lt;');
+    expect(acceleratorMarkup('Ctrl+Alt+U')).toBe('Ctrl+Alt+U');
   });
 });

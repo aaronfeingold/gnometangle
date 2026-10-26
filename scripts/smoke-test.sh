@@ -230,10 +230,12 @@ check "top bar icon shown" "true" "$(ev "!!$IND")"
 check "top bar menu items" "10" "$(ev "$IND.menu._getMenuItems().length")"
 check "menu shows the shortcut" "Left Half Ctrl+Alt+Left" \
   "$(ev "(() => { const i = $IND.menu._getMenuItems()[0].menu._getMenuItems()[0];
-    return i.label.text + ' ' + i.get_children().filter(c => c instanceof imports.gi.St.Label).pop().text.replace('←', 'Left'); })()")"
+    return i.label.text + ' ' + i.get_children().find(c => c.has_style_class_name?.('gnometangle-shortcut')).text.replace('←', 'Left'); })()")"
 ev "$EXT.stateObj.run('center')" >/dev/null
 ev "(() => { $IND.menu.open(); $IND.menu._getMenuItems()[0].menu._getMenuItems()[0].activate(null); return 1; })()" >/dev/null
 sleep 0.4
+check "menu shows keys in the keys font" "JetBrainsMono Nerd Font,JetBrains Mono,monospace" \
+  "$(ev "$IND.menu._getMenuItems()[0].menu._getMenuItems()[0].get_children().find(c => c.has_style_class_name?.('gnometangle-shortcut')).get_theme_node().get_font().get_family()")"
 check "menu item snaps the window" "$wx,$wy,$half,$wh" "$(ev "$FRAME")"
 check "menu closes after choosing" "false" "$(ev "$IND.menu.isOpen")"
 ev "$EXT.stateObj.run('restore')" >/dev/null
