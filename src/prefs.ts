@@ -19,6 +19,9 @@ export default class GnometanglePreferences extends ExtensionPreferences {
   override fillPreferencesWindow(window: Adw.PreferencesWindow): Promise<void> {
     const settings = this.getSettings();
     window.set_default_size(640, 720);
+    // GNOME turns search off for extension preferences; with this many actions it's the quickest way in.
+    // Typing anywhere in the window starts it, and it matches row titles on every page.
+    window.set_search_enabled(true);
     // Shortcuts first: the top bar menu's "Customize Shortcuts…" opens this window.
     window.add(buildShortcutsPage(settings, window));
     window.add(buildGeneralPage(settings, window));
