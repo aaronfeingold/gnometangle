@@ -5,6 +5,7 @@
 ### Added
 
 - The release notes on GitHub start with this changelog's section for the version.
+- Search in the preferences: start typing to find an action or setting.
 - README: how to get Mac-style Super+C / X / V copy, cut and paste everywhere with keyd.
 
 ### Changed

@@ -93,7 +93,7 @@ Behaviour borrowed from Rectangle:
 Every shortcut can be changed or disabled:
 
 1. Open **Customize Shortcuts…** from the top bar menu.
-2. Select an action and press the new keys. Backspace disables it, Esc cancels.
+2. Select an action (or start typing its name to search) and press the new keys. Backspace disables it, Esc cancels.
 3. The undo button next to a shortcut, or **Reset All**, brings back the defaults.
 
 If the keys you pick are already used by another Gnometangle action, they are moved to the new one, and a notice
