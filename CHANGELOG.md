@@ -5,6 +5,7 @@
 ### Added
 
 - The release notes on GitHub start with this changelog's section for the version.
+- README: how to get Mac-style Super+C / X / V copy, cut and paste everywhere with keyd.
 
 ## 0.2.0 (2026-10-24)
 
