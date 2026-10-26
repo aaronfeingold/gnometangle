@@ -15,27 +15,26 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/aaronfeingold/gnometangle" alt="MIT license"></a>
 </p>
 
+**What:** keyboard shortcuts that snap the focused window to a half, third, fourth or corner, center or maximize
+it, or move it to another monitor or workspace.
+
+**Why:** GNOME's built-in tiling covers halves and maximize. On wide and ultrawide monitors, thirds, fourths and a
+centered window make that extra space useful.
+
+**How:** Ctrl+Alt plus one key. Ctrl+Alt+Left for the left half, Ctrl+Alt+D / F / G for thirds, Ctrl+Alt+Enter to
+maximize. Every shortcut can be changed. Works on Wayland and X11, GNOME Shell 45 through 50.
+
 <p align="center">
   <img src="docs/images/snapping.gif" width="800" alt="A window snapping to halves, corners, thirds and maximize, each step captioned with its shortcut">
 </p>
-
-Press a shortcut and the focused window jumps to a half, third, fourth or corner of its screen, maximizes, centers,
-or moves to another monitor. Works on Wayland and X11.
-
-GNOME's built-in tiling covers halves and maximize, and that works well on a typical laptop screen. On wide and
-ultrawide monitors, two halves leave each window too wide to read or code in comfortably. Gnometangle adds the
-layouts that make that space useful, like thirds, fourths, a centered window and corners, all reachable from the
-keyboard. It's meant to build on what GNOME already does well.
-
-Targets GNOME Shell 45 through 50. An end-to-end test runs on GNOME 46, 49 and 50 (Ubuntu) and GNOME 50 (Fedora 44) under
-Wayland in CI for every change, and has also passed on GNOME 48. GNOME 45 and 47 are expected to work but are not tested yet.
 
 ## Install
 
 Gnometangle is not on extensions.gnome.org yet, so you install it yourself, either from a release zip or from a
 clone of this repository. Both take a couple of minutes and install only for your user, with no root needed.
 
-Check your GNOME version first. It needs GNOME Shell 45 or later:
+Check your GNOME version first. It needs GNOME Shell 45 or later. CI runs an end-to-end test on GNOME 46, 49 and 50
+(Ubuntu) and GNOME 50 (Fedora 44) under Wayland, and it has also passed on GNOME 48.
 
 ```sh
 gnome-shell --version
