@@ -115,6 +115,10 @@ labels in `src/core/actions.ts` are translated where they are shown, since that 
 - `main` only changes through pull requests that pass CI, and the maintainer reviews each one before it merges.
 - CI skips its checks when a pull request only touches Markdown files or `docs/`, so run `pnpm format:check` on
   those yourself; a badly formatted README would otherwise fail the next code pull request.
+- No visible AI tool attribution: no `Co-Authored-By` or `Claude-Session` trailers, no commits authored with an
+  `anthropic.com` address, and no "Generated with Claude Code" line, robot emoji or session link in the description. A
+  hidden HTML comment is fine. The `No visible AI attribution` check enforces this on every pull request; run
+  `scripts/check-attribution.sh origin/main..HEAD` to check your commits before pushing.
 
 ## Releasing (maintainer)
 
