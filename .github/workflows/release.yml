@@ -56,3 +56,33 @@ jobs:
         run: >-
           gh release create "$GITHUB_REF_NAME" ./*.shell-extension.zip SHA256SUMS
           --verify-tag --generate-notes --notes-file release-notes.md --title "$GITHUB_REF_NAME"
+
+  # Uploads the released zip to extensions.gnome.org, where it waits for review like any upload.
+  # Off until the repository variable EGO_PUBLISH is set to true; also needs the secrets EGO_USERNAME
+  # and EGO_PASSWORD (the extensions.gnome.org account that owns the extension). See CONTRIBUTING.md.
+  publish-ego:
+    name: Upload to extensions.gnome.org
+    needs: release
+    if: vars.EGO_PUBLISH == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Download the release zip
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download "$GITHUB_REF_NAME" -R "$GITHUB_REPOSITORY" -p '*.shell-extension.zip'
+      - name: Upload
+        env:
+          EGO_USERNAME: ${{ secrets.EGO_USERNAME }}
+          EGO_PASSWORD: ${{ secrets.EGO_PASSWORD }}
+        run: |
+          api=https://extensions.gnome.org/api/v1
+          token=$(jq -n --arg login "$EGO_USERNAME" --arg password "$EGO_PASSWORD" '{$login, $password}' \
+            | curl -fsS -H 'Content-Type: application/json' --data @- "$api/accounts/login/" \
+            | jq -r '.token.token')
+          echo "::add-mask::$token"
+          curl -fsS -H "Authorization: Token $token" \
+            -F shell_license_compliant=true -F tos_compliant=true \
+            -F "source=@$(ls ./*.shell-extension.zip)" \
+            "$api/extensions"
