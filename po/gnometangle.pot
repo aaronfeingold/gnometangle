@@ -435,3 +435,15 @@ msgstr ""
 #: src/core/actions.ts
 msgid "Identify Displays"
 msgstr ""
+
+#: src/core/actions.ts
+msgid "Rotate Display Right"
+msgstr ""
+
+#: src/core/actions.ts
+msgid "Rotate Display Left"
+msgstr ""
+
+#: src/core/actions.ts
+msgid "Reset Display Rotation"
+msgstr ""

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **Rotate Display Right**, **Rotate Display Left** and **Reset Display Rotation** turn the display your window is on,
+  for a laptop on its side or a monitor on a pivot stand. Unset by default: give them keys in the preferences.
+
 ## 0.3.0 (2026-10-25)
 
 ### Added

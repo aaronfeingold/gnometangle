@@ -15,6 +15,9 @@ export type WorkspaceTarget = number | 'next' | 'previous';
  */
 export type DisplayTarget = 'next' | 'previous' | Edge | number;
 
+/** How a display is turned: back to landscape, or a quarter turn clockwise or counterclockwise. */
+export type Rotation = 'normal' | 'right' | 'left';
+
 /** A region expressed as fractions of a work area, from 0 to 1 on each axis. */
 export interface Region {
   x0: number;
@@ -49,7 +52,9 @@ export type ActionBehavior =
   /** Focuses the top window on another display without moving anything. */
   | { readonly kind: 'focus-display'; readonly target: 'next' | 'previous' }
   /** Briefly shows each display's number on it. */
-  | { readonly kind: 'identify-displays' };
+  | { readonly kind: 'identify-displays' }
+  /** Rotates the display the window is on, or the pointer's display without a window. */
+  | { readonly kind: 'rotate-display'; readonly rotation: Rotation };
 
 export interface ActionDef {
   /**
@@ -358,6 +363,28 @@ export const ACTIONS = [
     group: 'display',
     defaults: [],
     behavior: { kind: 'identify-displays' },
+  },
+  // Ids avoid GNOME's own rotate-monitor name.
+  {
+    id: 'rotate-display-right',
+    label: 'Rotate Display Right',
+    group: 'display',
+    defaults: [],
+    behavior: { kind: 'rotate-display', rotation: 'right' },
+  },
+  {
+    id: 'rotate-display-left',
+    label: 'Rotate Display Left',
+    group: 'display',
+    defaults: [],
+    behavior: { kind: 'rotate-display', rotation: 'left' },
+  },
+  {
+    id: 'reset-display-rotation',
+    label: 'Reset Display Rotation',
+    group: 'display',
+    defaults: [],
+    behavior: { kind: 'rotate-display', rotation: 'normal' },
   },
 ] as const satisfies readonly ActionDef[];
 

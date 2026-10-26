@@ -158,6 +158,8 @@ describe('size and position', () => {
     'send-to-display-2',
     'focus-next-display',
     'identify-displays',
+    'rotate-display-right',
+    'reset-display-rotation',
   ] as const;
 
   it('returns null for actions handled outside geometry', () => {
@@ -166,9 +168,12 @@ describe('size and position', () => {
 
   it('handles every non-history action', () => {
     const handled = ACTIONS.filter(
-      (a) => !['restore', 'display', 'workspace', 'focus-display', 'identify-displays'].includes(a.behavior.kind),
+      (a) =>
+        !['restore', 'display', 'workspace', 'focus-display', 'identify-displays', 'rotate-display'].includes(
+          a.behavior.kind,
+        ),
     );
-    expect(handled.length).toBe(ACTIONS.length - 24);
+    expect(handled.length).toBe(ACTIONS.length - 27);
     for (const a of handled) expect(target(a.id), a.id).not.toBeNull();
   });
 });

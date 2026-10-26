@@ -65,6 +65,7 @@ preferences window.
 | Display 1 / 2 / 3                                 | unset                          |
 | Focus next / previous display                     | unset                          |
 | Identify displays                                 | unset, and in the top bar menu |
+| Rotate display right / left, reset rotation       | unset                          |
 
 Behaviour borrowed from Rectangle:
 
@@ -78,6 +79,10 @@ Behaviour borrowed from Rectangle:
   that way in your monitor layout, and Display 1, 2 and 3 are numbered left to right, then top to bottom.
   **Identify Displays** shows each number on its display for a moment.
 - Focus next / previous display focuses the top window on that display without moving anything.
+- Rotate display right and left turn the display the window is on a quarter turn, for a laptop on its side or a
+  monitor on a pivot stand; reset rotation turns it back to landscape. Other displays stay on and move up to stay
+  next to it, and its windows stay on it, snapped ones keeping their layout. Like Settings' Displays panel without
+  its confirm step, the rotation lasts until the next display change, such as plugging in a monitor.
 - Make larger and make smaller keep edges that touch the screen pinned, so a left-half window grows to the right.
   The width and height versions do the same along one axis.
 - Move left, right, up and down slide the window to that edge of the screen without resizing it.
