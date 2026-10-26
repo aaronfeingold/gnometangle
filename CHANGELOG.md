@@ -1,12 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 (2026-10-25)
 
 ### Added
 
-- The release notes on GitHub start with this changelog's section for the version.
 - Search in the preferences: start typing to find an action or setting.
 - README: how to get Mac-style Super+C / X / V copy, cut and paste everywhere with keyd.
+- The release notes on GitHub start with this changelog's section, and CI also tests on Fedora 44.
 
 ### Changed
 
