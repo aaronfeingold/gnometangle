@@ -23,6 +23,11 @@
 Press a shortcut and the focused window jumps to a half, third, fourth or corner of its screen, maximizes, centers,
 or moves to another monitor. Works on Wayland and X11.
 
+GNOME's built-in tiling covers halves and maximize, and that works well on a typical laptop screen. On wide and
+ultrawide monitors, two halves leave each window too wide to read or code in comfortably. Gnometangle adds the
+layouts that make that space useful, like thirds, fourths, a centered window and corners, all reachable from the
+keyboard. It's meant to build on what GNOME already does well.
+
 Targets GNOME Shell 45 through 50. An end-to-end test runs on GNOME 46, 49 and 50 (Ubuntu) and GNOME 50 (Fedora 44) under
 Wayland in CI for every change, and has also passed on GNOME 48. GNOME 45 and 47 are expected to work but are not tested yet.
 
@@ -121,13 +126,14 @@ Open them from the top bar menu (**Customize Shortcuts…**) or with
 - Almost maximize size (90 percent by default).
 - Resize step for make larger and make smaller.
 - Follow windows to other workspaces (on by default).
-- Opinionated overrides (off by default), described below.
+- Enable overrides (off by default), described below.
 - Ignored apps: while one of them has focus, Gnometangle's shortcuts are turned off so the app gets those keys.
   The top bar menu still works on its windows.
 
-## Opinionated overrides
+## Enable overrides
 
-Some of Gnometangle's default shortcuts are also GNOME shortcuts. Gnometangle doesn't change your GNOME shortcuts
+Gnometangle keeps every layout under one hand position, Ctrl+Alt plus a key, so you can snap windows without
+stretching for an extra modifier. Some of Gnometangle's default shortcuts are also GNOME shortcuts. Gnometangle doesn't change your GNOME shortcuts
 unless you ask it to, so with the defaults both claim these keys and only one of the two actions runs:
 
 | Keys                        | GNOME action                           | Gnometangle action                |
@@ -137,7 +143,7 @@ unless you ask it to, so with the defaults both claim these keys and only one of
 | Ctrl+Alt+Shift+Up           | Move window one workspace up           | Maximize height                   |
 | Ctrl+Alt+Shift+Left / Right | Move window one workspace left / right | Send to previous / next workspace |
 
-To let Gnometangle have them, turn on **Opinionated Overrides** in the **General** page of the preferences, or run:
+To let Gnometangle have them, turn on **Enable Overrides** in the **General** page of the preferences, or run:
 
 ```sh
 gsettings --schemadir ~/.local/share/gnome-shell/extensions/gnometangle@aaronfeingold.github.io/schemas \
