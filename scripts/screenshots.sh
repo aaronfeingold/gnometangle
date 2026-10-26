@@ -125,7 +125,8 @@ snap Notes center
 n=0
 while IFS='|' read -r action caption; do
   snap Notes "$action"
-  sleep 0.2
+  # Workspace switches animate, and Identify Displays fades in.
+  case $action in send-to-*-workspace | identify-displays) sleep 0.8 ;; *) sleep 0.2 ;; esac
   frame="$FRAMES/$(printf '%02d' $n).png"
   shot "$frame"
   magick "$frame" -gravity south -font Cantarell-Bold -pointsize 34 \
@@ -144,6 +145,11 @@ bottom-left|Ctrl+Alt+J   Bottom Left
 first-third|Ctrl+Alt+D   First Third
 center-third|Ctrl+Alt+F   Center Third
 last-third|Ctrl+Alt+G   Last Third
+first-fourth|Ctrl+Alt+1   First Fourth
+last-fourth|Ctrl+Alt+4   Last Fourth
+send-to-next-workspace|Ctrl+Alt+Shift+→   Next Workspace
+send-to-previous-workspace|Ctrl+Alt+Shift+←   Back
+identify-displays|Identify Displays
 maximize-window|Ctrl+Alt+Enter   Maximize
 restore|Ctrl+Alt+Backspace   Restore
 EOF
