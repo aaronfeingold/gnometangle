@@ -113,6 +113,8 @@ labels in `src/core/actions.ts` are translated where they are shown, since that 
 - Keep each pull request to one change, and describe what it fixes and how you tested it.
 - `pnpm check` must pass, and the smoke test should pass for changes to anything in `src/` outside `src/core/`.
 - `main` only changes through pull requests that pass CI, and the maintainer reviews each one before it merges.
+- CI skips its checks when a pull request only touches Markdown files or `docs/`, so run `pnpm format:check` on
+  those yourself; a badly formatted README would otherwise fail the next code pull request.
 
 ## Releasing (maintainer)
 
@@ -129,3 +131,15 @@ git switch main && git pull && git tag -m v0.3.0 v0.3.0 && git push origin v0.3.
 The release workflow refuses tags that aren't on `main` or don't match `package.json`. It runs the full checks,
 builds the zip and publishes it with `SHA256SUMS` and a build attestation. That zip is what gets uploaded to
 extensions.gnome.org.
+
+### Publishing to extensions.gnome.org
+
+The release workflow can upload that zip to extensions.gnome.org after the GitHub release, where it waits for review
+like any upload. It is off until the extension's first version has been uploaded by hand and approved. To turn it on,
+add these under Settings, Secrets and variables, Actions:
+
+- Secret `EGO_USERNAME`: the extensions.gnome.org account that owns the extension.
+- Secret `EGO_PASSWORD`: that account's password.
+- Variable `EGO_PUBLISH`: `true`. Delete it, or set anything else, to stop uploading.
+
+From then on, pushing a tag releases on GitHub and uploads to extensions.gnome.org.
