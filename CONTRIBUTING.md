@@ -80,7 +80,7 @@ The preferences window and the top bar menu pick it up automatically.
 `scripts/smoke-test.sh` starts a headless GNOME Shell with two virtual monitors, installs the packed zip, opens a
 real GTK window and checks that every shortcut registered, snapping, cycling, restore, unmaximizing, display moves,
 real Ctrl+Alt+Left and Ctrl+Alt+Enter key presses, the top bar menu, the preferences window, and that GNOME's
-shortcuts are restored on disable. CI runs it on GNOME 46, 49 and 50 in Ubuntu containers. Run it locally:
+shortcuts are restored on disable. CI runs it on GNOME 46, 49 and 50 in Ubuntu containers, and on GNOME 50 in a Fedora 44 container. Run it locally:
 
 ```sh
 pnpm run pack
