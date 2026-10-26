@@ -10,13 +10,17 @@ import { computeTarget, mapToWorkArea, moveToWorkArea, rectsClose } from './core
 import { orderMonitors, resolveDisplay } from './core/monitors.js';
 import type { Rect } from './core/types.js';
 import { workspacePlan } from './core/workspaces.js';
-import type { DisplayTarget, WorkspaceTarget } from './core/actions.js';
+import type { DisplayTarget, Rotation, WorkspaceTarget } from './core/actions.js';
+import { rotateDisplay } from './rotate.js';
+import { isMaximized } from './compat.js';
 import { currentWorkArea, frameRect, toRect, type WindowMover } from './window.js';
 
 const SNAPPABLE_TYPES = new Set([Meta.WindowType.NORMAL, Meta.WindowType.DIALOG, Meta.WindowType.MODAL_DIALOG]);
 
 export class Snapper {
   private history = new WeakMap<Meta.Window, WindowHistory>();
+  /** Set on disable, so a rotation that finishes afterwards leaves windows alone. */
+  private destroyed = false;
 
   constructor(
     private readonly settings: Gio.Settings,
@@ -36,6 +40,10 @@ export class Snapper {
     }
     if (behavior.kind === 'focus-display') {
       this.focusDisplay(behavior.target, win);
+      return;
+    }
+    if (behavior.kind === 'rotate-display') {
+      this.rotateDisplay(behavior.rotation, win);
       return;
     }
     if (!win || !win.get_compositor_private() || !SNAPPABLE_TYPES.has(win.get_window_type())) return;
@@ -113,16 +121,57 @@ export class Snapper {
     top?.activate(global.get_current_time());
   }
 
+  destroy(): void {
+    this.destroyed = true;
+  }
+
+  /**
+   * Rotates the display `win` is on, or the pointer's display without a window. Mutter keeps a
+   * window's size and can leave it mostly on another display once this one changes shape, so its
+   * windows are put back on it like Next Display does: snapped ones keep their layout.
+   * Maximized and fullscreen windows already follow the display.
+   */
+  private rotateDisplay(rotation: Rotation, win: Meta.Window | null): void {
+    const monitor = win?.get_monitor() ?? global.display.get_current_monitor();
+    const windows = global.display
+      .list_all_windows()
+      .filter(
+        (w) =>
+          w.get_monitor() === monitor &&
+          !w.minimized &&
+          !w.is_fullscreen() &&
+          !isMaximized(w) &&
+          SNAPPABLE_TYPES.has(w.get_window_type()),
+      )
+      .map((w) => ({ win: w, frame: frameRect(w), area: toRect(w.get_work_area_for_monitor(monitor)) }));
+
+    rotateDisplay(monitor, rotation)
+      .then((connector) => {
+        if (!connector || this.destroyed) return;
+        const to = global.backend.get_monitor_manager().get_monitor_for_connector(connector);
+        for (const { win, frame, area } of windows) {
+          if (win.get_compositor_private()) this.placeOnMonitor(win, frame, area, to);
+        }
+      })
+      .catch((e: unknown) => {
+        console.warn(
+          `Gnometangle: couldn't rotate display ${monitor + 1}: ${e instanceof Error ? e.message : String(e)}`,
+        );
+      });
+  }
+
   private moveToDisplay(win: Meta.Window, displayTarget: DisplayTarget): void {
     const geometries = monitorGeometries();
     if (geometries.length < 2) return;
     const from = win.get_monitor();
     const to = resolveDisplay(geometries, from, displayTarget);
     if (to === from) return;
+    this.placeOnMonitor(win, frameRect(win), toRect(win.get_work_area_for_monitor(from)), to);
+  }
 
-    const fromArea = toRect(win.get_work_area_for_monitor(from));
+  /** Moves `win`, whose frame was `current` in work area `fromArea`, onto monitor `to`. */
+  private placeOnMonitor(win: Meta.Window, current: Rect, fromArea: Rect, to: number): void {
     const toArea = toRect(win.get_work_area_for_monitor(to));
-    const current = frameRect(win);
     const entry = this.history.get(win);
     const snapped = entry !== undefined && rectsClose(current, entry.lastTarget);
     const target = moveToWorkArea(current, fromArea, toArea, snapped);

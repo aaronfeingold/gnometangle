@@ -331,6 +331,30 @@ apply_monitors "[(0, 0, 1.0, uint32 0, true, [('Meta-0', '1920x1080@60.000', @a{
 ev "$EXT.stateObj.run('restore', $SMOKE)" >/dev/null
 sleep 0.4
 
+# Rotation turns the window's display and keeps the other one next to it. Snapped to the left half
+# first, the window stays inside its display when that gets narrower.
+ev "$EXT.stateObj.run('left-half', $SMOKE)" >/dev/null
+sleep 0.4
+LAYOUT="[0, 1].map(i => global.display.get_monitor_geometry(i)).sort((a, b) => a.x - b.x).map(g => [g.x, g.y, g.width, g.height].join(',')).join(' ')"
+ROTATED_CONNECTOR="['Meta-0', 'Meta-1'].find(c => global.backend.get_monitor_manager().get_monitor_for_connector(c) === $SMOKE.get_monitor())"
+landscape=$(ev "$LAYOUT")
+rotated=$(ev "$ROTATED_CONNECTOR")
+if [[ "$rotated" == Meta-0 ]]; then portrait="0,0,1080,1920 1080,0,1280,1024"; else portrait="0,0,1920,1080 1920,0,1024,1280"; fi
+ev "$EXT.stateObj.run('rotate-display-right', $SMOKE)" >/dev/null
+sleep 1.5
+check "rotate display right" "$portrait" "$(ev "$LAYOUT")"
+rotated_index=$(ev "global.backend.get_monitor_manager().get_monitor_for_connector('$rotated')")
+check "snapped window stays snapped on the rotated display" "$rotated_index $(ev "${LEFT_HALF_OF/MON/$rotated_index}")" \
+  "$(ev "$SMOKE.get_monitor()") $(ev "$SMOKE_FRAME_EXPR")"
+ev "$EXT.stateObj.run('rotate-display-left', $SMOKE)" >/dev/null
+sleep 1.5
+check "rotate display left" "$portrait" "$(ev "$LAYOUT")"
+ev "$EXT.stateObj.run('reset-display-rotation', $SMOKE)" >/dev/null
+sleep 1.5
+check "reset display rotation" "$landscape" "$(ev "$LAYOUT")"
+ev "$EXT.stateObj.run('restore', $SMOKE)" >/dev/null
+sleep 0.4
+
 # Workspaces: numbered targets are created when missing, the frame stays, and Follow is a setting.
 SMOKE="global.get_window_actors().find(a => a.meta_window.get_title() === 'smoke').meta_window"
 WS="[$SMOKE.get_workspace().index(), global.workspace_manager.get_active_workspace_index()].join(',')"

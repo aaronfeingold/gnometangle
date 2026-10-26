@@ -53,6 +53,7 @@ export default class GnometangleExtension extends Extension {
     this.identifier = null;
     this.mover?.destroy();
     this.mover = null;
+    this.snapper?.destroy();
     this.snapper = null;
     if (this.settings) {
       for (const id of this.settingsHandlers) this.settings.disconnect(id);
