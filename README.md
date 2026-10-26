@@ -150,34 +150,6 @@ The other way around works too: leave it off and give the Gnometangle actions di
 On Ubuntu, Ctrl+Alt+T opens a terminal. That binding lives in a different place and is not overridden, so "Last Two
 Thirds" shows a warning. Rebind it (or the terminal shortcut) if you want both.
 
-## Mac-style copy and paste
-
-Gnometangle handles windows. The other half of feeling at home after a Mac is Cmd+C / Cmd+V. GNOME can't remap
-those itself, but [keyd](https://github.com/rvaiya/keyd), a small key-remapping service, can make **Super+C / X / V**
-copy, cut and paste in every app, terminals included. It isn't part of the extension (it runs as a system service),
-so set it up separately:
-
-```sh
-# Fedora; on other distros see keyd's README
-sudo dnf copr enable alternateved/keyd
-sudo dnf install keyd
-sudo tee /etc/keyd/default.conf >/dev/null <<'CONF'
-[ids]
-*
-
-# Keys bound in a modifier layer are sent without that modifier, so Super+C is exactly Ctrl+Insert,
-# which GTK apps, browsers, Electron apps and terminals all treat as copy.
-[meta]
-c = C-insert
-x = S-delete
-v = S-insert
-CONF
-sudo systemctl enable --now keyd
-```
-
-Other Super shortcuts keep working. The maintainer's [fedora-dev-machine](https://github.com/aaronfeingold/fedora-dev-machine)
-Ansible playbook sets up keyd, Gnometangle with Opinionated Overrides, and Mac-style screenshot keys together.
-
 ## Install
 
 ### From a release
