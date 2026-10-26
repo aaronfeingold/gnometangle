@@ -10,26 +10,111 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/aaronfeingold/gnometangle/actions/workflows/ci.yml"><img src="https://github.com/aaronfeingold/gnometangle/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://github.com/aaronfeingold/gnometangle/releases/latest"><img src="https://img.shields.io/github/v/release/aaronfeingold/gnometangle" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/GNOME_Shell-45%E2%80%9350-4a86cf" alt="GNOME Shell 45–50">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/aaronfeingold/gnometangle" alt="MIT license"></a>
 </p>
 
+**What:** keyboard shortcuts that snap the focused window to a half, third, fourth or corner, center or maximize
+it, or move it to another monitor or workspace.
+
+**Why:** GNOME's built-in tiling covers halves and maximize. On wide and ultrawide monitors, thirds, fourths and a
+centered window make that extra space useful.
+
+**How:** Ctrl+Alt plus one key. Ctrl+Alt+Left for the left half, Ctrl+Alt+D / F / G for thirds, Ctrl+Alt+Enter to
+maximize. Every shortcut can be changed. Works on Wayland and X11, GNOME Shell 45 through 50.
+
 <p align="center">
   <img src="docs/images/snapping.gif" width="800" alt="A window snapping to halves, corners, thirds and maximize, each step captioned with its shortcut">
 </p>
 
-Press a shortcut and the focused window jumps to a half, third, fourth or corner of its screen, maximizes, centers,
-or moves to another monitor. Works on Wayland and X11.
+## Install
 
-GNOME's built-in tiling covers halves and maximize, and that works well on a typical laptop screen. On wide and
-ultrawide monitors, two halves leave each window too wide to read or code in comfortably. Gnometangle adds the
-layouts that make that space useful, like thirds, fourths, a centered window and corners, all reachable from the
-keyboard. It's meant to build on what GNOME already does well.
+Gnometangle is not on extensions.gnome.org yet, so you install it yourself, either from a release zip or from a
+clone of this repository. Both take a couple of minutes and install only for your user, with no root needed.
 
-Targets GNOME Shell 45 through 50. An end-to-end test runs on GNOME 46, 49 and 50 (Ubuntu) and GNOME 50 (Fedora 44) under
-Wayland in CI for every change, and has also passed on GNOME 48. GNOME 45 and 47 are expected to work but are not tested yet.
+Check your GNOME version first. It needs GNOME Shell 45 or later. CI runs an end-to-end test on GNOME 46, 49 and 50
+(Ubuntu) and GNOME 50 (Fedora 44) under Wayland, and it has also passed on GNOME 48.
+
+```sh
+gnome-shell --version
+```
+
+### From a release (easiest)
+
+1. Download `gnometangle@aaronfeingold.github.io.shell-extension.zip` from the
+   [latest release](https://github.com/aaronfeingold/gnometangle/releases/latest). Each release also has
+   `SHA256SUMS` and a signed build attestation; see [SECURITY.md](SECURITY.md) to verify a download.
+2. Install it:
+
+   ```sh
+   gnome-extensions install --force ~/Downloads/gnometangle@aaronfeingold.github.io.shell-extension.zip
+   ```
+
+3. Log out and back in. On Wayland, GNOME only loads new extension code at login. On X11 you can instead press
+   Alt+F2, type `r` and press Enter.
+4. Enable it:
+
+   ```sh
+   gnome-extensions enable gnometangle@aaronfeingold.github.io
+   ```
+
+The icon appears in the top bar. Try Ctrl+Alt+Left on any window.
+
+### From source
+
+Use this to run the latest code on `main`, or a branch. You need git, Node.js 22 or later (from your distribution,
+[nodejs.org](https://nodejs.org/) or a version manager such as nvm), and pnpm (see
+[pnpm.io/installation](https://pnpm.io/installation)).
+
+```sh
+git clone https://github.com/aaronfeingold/gnometangle.git
+cd gnometangle
+./scripts/install.sh
+```
+
+`scripts/install.sh` installs the dependencies, builds the extension, packs it into a zip and installs that zip for
+your user. Then log out and back in, and enable it:
+
+```sh
+gnome-extensions enable gnometangle@aaronfeingold.github.io
+```
+
+If you would rather run the steps yourself:
+
+```sh
+pnpm install --frozen-lockfile
+pnpm run pack
+gnome-extensions install --force gnometangle@aaronfeingold.github.io.shell-extension.zip
+```
+
+### Update
+
+Install the newer zip the same way (`--force` replaces the installed copy), or `git pull` and run
+`./scripts/install.sh` again, then log out and back in. Your settings and shortcuts are kept.
+
+### Check that it is running
+
+```sh
+gnome-extensions info gnometangle@aaronfeingold.github.io
+```
+
+`State: ACTIVE` (or `ENABLED` on older GNOME) means it is running. If it says `ERROR`, or the extension does not
+show up after logging back in, the reason is in the shell log:
+
+```sh
+journalctl --user -b -o cat /usr/bin/gnome-shell | grep -i gnometangle
+```
+
+Please include that output if you [open an issue](https://github.com/aaronfeingold/gnometangle/issues).
+
+### Uninstall
+
+```sh
+gnome-extensions uninstall gnometangle@aaronfeingold.github.io
+```
+
+If you turned on **Enable Overrides**, disabling or uninstalling the extension puts your GNOME shortcuts back.
 
 ## Top bar menu
 
@@ -160,36 +245,6 @@ The other way around works too: leave it off and give the Gnometangle actions di
 
 On Ubuntu, Ctrl+Alt+T opens a terminal. That binding lives in a different place and is not overridden, so "Last Two
 Thirds" shows a warning. Rebind it (or the terminal shortcut) if you want both.
-
-## Install
-
-### From a release
-
-1. Download `gnometangle@aaronfeingold.github.io.shell-extension.zip` from the
-   [latest release](https://github.com/aaronfeingold/gnometangle/releases/latest). Each release also has
-   `SHA256SUMS` and a signed build attestation; see [SECURITY.md](SECURITY.md) to verify a download.
-2. Install and enable it:
-
-   ```sh
-   gnome-extensions install --force gnometangle@aaronfeingold.github.io.shell-extension.zip
-   ```
-
-3. Log out and back in (required on Wayland), then:
-
-   ```sh
-   gnome-extensions enable gnometangle@aaronfeingold.github.io
-   gnome-extensions prefs gnometangle@aaronfeingold.github.io   # optional, opens preferences
-   ```
-
-### From source
-
-Requires Node.js 22 and pnpm. See [CONTRIBUTING.md](CONTRIBUTING.md) for the development setup.
-
-```sh
-git clone https://github.com/aaronfeingold/gnometangle.git
-cd gnometangle
-./scripts/install.sh
-```
 
 ## Contributing
 
