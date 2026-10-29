@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://github.com/aaronfeingold/gnometangle/releases/latest"><img src="https://img.shields.io/github/v/release/aaronfeingold/gnometangle" alt="Latest release"></a>
-  <img src="https://img.shields.io/badge/GNOME_Shell-45%E2%80%9350-4a86cf" alt="GNOME Shell 45–50">
+  <img src="https://img.shields.io/badge/GNOME_Shell-45%E2%80%9351-4a86cf" alt="GNOME Shell 45–51">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/aaronfeingold/gnometangle" alt="MIT license"></a>
 </p>
 
@@ -22,7 +22,7 @@ it, or move it to another monitor or workspace.
 centered window make that extra space useful.
 
 **How:** Ctrl+Alt plus one key. Ctrl+Alt+Left for the left half, Ctrl+Alt+D / F / G for thirds, Ctrl+Alt+Enter to
-maximize. Every shortcut can be changed. Works on Wayland and X11, GNOME Shell 45 through 50.
+maximize. Every shortcut can be changed. Works on Wayland and X11, GNOME Shell 45 through 51.
 
 <p align="center">
   <img src="docs/images/snapping.gif" width="800" alt="A window snapping to halves, corners, thirds and maximize, each step captioned with its shortcut">
@@ -33,8 +33,8 @@ maximize. Every shortcut can be changed. Works on Wayland and X11, GNOME Shell 4
 Gnometangle is not on extensions.gnome.org yet, so you install it yourself, either from a release zip or from a
 clone of this repository. Both take a couple of minutes and install only for your user, with no root needed.
 
-Check your GNOME version first. It needs GNOME Shell 45 or later. CI runs an end-to-end test on GNOME 46, 49 and 50
-(Ubuntu) and GNOME 50 (Fedora 44) under Wayland, and it has also passed on GNOME 48.
+Check your GNOME version first. It needs GNOME Shell 45 or later. CI runs an end-to-end test on GNOME 46, 49, 50 and 51
+(Ubuntu) and GNOME 50 and 51 (Fedora 44 and 45) under Wayland, and it has also passed on GNOME 48.
 
 ```sh
 gnome-shell --version
