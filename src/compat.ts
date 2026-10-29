@@ -1,5 +1,5 @@
 // Mutter changed several window APIs in GNOME 49 (maximize flags were removed and
-// get_maximized() became is_maximized()). These helpers work on 45 through 50.
+// get_maximized() became is_maximized()). These helpers work on 45 through 51.
 
 import type Meta from 'gi://Meta';
 

@@ -62,8 +62,17 @@ mkdir -p "$HOME/.local/share/gnome-shell/extensions/$UUID"
 unzip -q -o "$ZIP" -d "$HOME/.local/share/gnome-shell/extensions/$UUID"
 glib-compile-schemas "$HOME/.local/share/gnome-shell/extensions/$UUID/schemas"
 
+# The scheduled newest-GNOME check runs releases that metadata.json does not list yet. Without this
+# GNOME would refuse to load the extension as out of date before any real check runs.
+if [[ -n "${SMOKE_IGNORE_SHELL_VERSION:-}" ]]; then
+  gsettings set org.gnome.shell disable-extension-version-validation true
+fi
+
 # Logical layout, so monitors with different scales have different logical sizes (checked below).
-gsettings set org.gnome.mutter experimental-features "['scale-monitor-framebuffer']"
+# GNOME 51 made that the default and dropped the setting.
+if gsettings list-keys org.gnome.mutter | grep -qx experimental-features; then
+  gsettings set org.gnome.mutter experimental-features "['scale-monitor-framebuffer']"
+fi
 shell_args=(--headless --wayland --unsafe-mode --virtual-monitor 1920x1080 --virtual-monitor 1280x1024)
 if gnome-shell --help 2>&1 | grep -q -- '--no-x11'; then shell_args+=(--no-x11); fi
 gnome-shell "${shell_args[@]}" >"$LOG" 2>&1 &
@@ -171,7 +180,7 @@ ev "$EXT.stateObj.run('restore')" >/dev/null
 sleep 0.4
 
 # A real key press through a virtual keyboard: Ctrl+Alt+Left (evdev codes 29, 56, 105).
-ev "globalThis._smokeKbd = imports.gi.Clutter.get_default_backend().get_default_seat().create_virtual_device(imports.gi.Clutter.InputDeviceType.KEYBOARD_DEVICE); 1" >/dev/null
+ev "globalThis._smokeKbd = (global.stage.context?.get_backend() ?? imports.gi.Clutter.get_default_backend()).get_default_seat().create_virtual_device(imports.gi.Clutter.InputDeviceType.KEYBOARD_DEVICE); 1" >/dev/null
 sleep 0.5
 press() {
   ev "(() => {
