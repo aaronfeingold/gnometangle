@@ -107,9 +107,13 @@ jobs:
             gnome: '49'
           - image: ubuntu:26.04
             gnome: '50'
+          - image: ubuntu:26.10
+            gnome: '51'
           # Named apart so the Ubuntu jobs keep their required-check names.
           - image: registry.fedoraproject.org/fedora:44
             gnome: '50 (Fedora 44)'
+          - image: registry.fedoraproject.org/fedora:45
+            gnome: '51 (Fedora 45)'
     steps:
       - if: env.CODE != 'true'
         run: echo 'Docs-only change, nothing to smoke test'

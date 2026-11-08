@@ -1,0 +1,167 @@
+name: Newest GNOME
+
+# Once a month, runs the smoke test against the newest GNOME Shell the distros ship, including
+# prereleases (Fedora Rawhide gets GNOME alphas and betas first, ubuntu:devel follows the next
+# Ubuntu release). Opens an issue, or comments on the open one, when the test fails or when GNOME
+# reports a version that metadata.json does not list yet.
+
+on:
+  schedule:
+    - cron: '0 6 1 * *'
+  workflow_dispatch:
+
+concurrency:
+  group: gnome-next
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run pack
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: extension-zip
+          path: '*.shell-extension.zip'
+          if-no-files-found: error
+
+  smoke:
+    name: Smoke test on ${{ matrix.image }}
+    needs: build
+    runs-on: ubuntu-latest
+    container: ${{ matrix.image }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - registry.fedoraproject.org/fedora:rawhide
+          - ubuntu:devel
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: extension-zip
+      - name: Run the smoke test
+        id: smoke
+        shell: bash
+        env:
+          SMOKE_IGNORE_SHELL_VERSION: '1'
+        run: |
+          set -o pipefail
+          scripts/smoke-container.sh 2>&1 | tee smoke.log
+      - name: Record the result
+        if: always()
+        shell: bash
+        env:
+          IMAGE: ${{ matrix.image }}
+          OUTCOME: ${{ steps.smoke.outcome }}
+        run: |
+          version=$(gnome-shell --version 2>/dev/null | awk '{print $3}' || true)
+          mkdir -p result
+          # The distro images have no jq; none of these values contain quotes.
+          printf '{"image":"%s","version":"%s","outcome":"%s"}\n' "$IMAGE" "${version:-unknown}" "$OUTCOME" >result/result.json
+          tail -60 smoke.log >result/smoke-tail.log 2>/dev/null || echo 'No log: the step did not start.' >result/smoke-tail.log
+          cat result/result.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: result-${{ strategy.job-index }}
+          path: result/
+
+  report:
+    name: Report
+    needs: smoke
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: result-*
+          path: results
+      - name: Open or update the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          supported=$(jq -r '."shell-version" | join(" ")' metadata.json)
+          problems=0
+          {
+            echo "The [monthly newest-GNOME check]($RUN_URL) found something to look at."
+            echo
+            echo "metadata.json lists shell-version: $supported"
+            echo
+            echo '| Image | GNOME Shell | Smoke test | Listed in metadata.json |'
+            echo '| --- | --- | --- | --- |'
+          } >body.md
+          for dir in results/*/; do
+            image=$(jq -r .image "$dir/result.json")
+            version=$(jq -r .version "$dir/result.json")
+            outcome=$(jq -r .outcome "$dir/result.json")
+            major=${version%%.*}
+            listed=yes
+            if [ "$version" = unknown ]; then
+              listed='n/a'
+            elif ! jq -e --arg m "$major" '."shell-version" | index($m)' metadata.json >/dev/null; then
+              listed=no
+              problems=$((problems + 1))
+            fi
+            [ "$outcome" = success ] || problems=$((problems + 1))
+            echo "| $image | $version | $outcome | $listed |" >>body.md
+          done
+          if [ "$(ls -d results/*/ 2>/dev/null | wc -l)" -eq 0 ]; then
+            echo '| (no results: the smoke jobs did not run) | | | |' >>body.md
+            problems=$((problems + 1))
+          fi
+          for dir in results/*/; do
+            {
+              echo
+              echo "<details><summary>Log tail: $(jq -r .image "$dir/result.json")</summary>"
+              echo
+              echo '```'
+              cat "$dir/smoke-tail.log"
+              echo '```'
+              echo '</details>'
+            } >>body.md
+          done
+          {
+            echo
+            echo 'A failed smoke test means the extension broke on that GNOME (or the image could not install it;'
+            echo 'the log tail says which). A version not listed means it passed but needs adding to'
+            echo 'metadata.json shell-version before release.'
+          } >>body.md
+          cat body.md >>"$GITHUB_STEP_SUMMARY"
+
+          if [ "$problems" -eq 0 ]; then
+            echo 'Newest GNOME is supported and the smoke test passed.'
+            exit 0
+          fi
+          gh label create gnome-next --color 4A86C8 \
+            --description 'Found by the scheduled newest-GNOME check' 2>/dev/null || true
+          issue=$(gh issue list --label gnome-next --state open --json number --jq '.[0].number // empty')
+          if [ -n "$issue" ]; then
+            gh issue comment "$issue" --body-file body.md
+          else
+            gh issue create --title 'Newest GNOME check needs attention' --label gnome-next --body-file body.md
+          fi
