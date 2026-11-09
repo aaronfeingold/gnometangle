@@ -74,7 +74,7 @@ function escapeXml(s) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function schemaXml({ ACTIONS, SETTINGS, SCHEMA_ID, SCHEMA_PATH }) {
+function schemaXml({ ACTIONS, SETTINGS, SCHEMA_ID, SCHEMA_PATH, CUSTOM_LAYOUT_DEFAULTS, customLayoutKey }) {
   const intKey = (name, def, min, max, summary) =>
     `    <key name="${name}" type="i">\n      <default>${def}</default>\n      <range min="${min}" max="${max}"/>\n      <summary>${summary}</summary>\n    </key>`;
   const boolKey = (name, def, summary) =>
@@ -91,6 +91,10 @@ function schemaXml({ ACTIONS, SETTINGS, SCHEMA_ID, SCHEMA_PATH }) {
     `    <key name="${SETTINGS.ignoredApps}" type="as">\n      <default>[]</default>\n      <summary>App ids (desktop file names) whose windows Gnometangle's shortcuts leave alone</summary>\n    </key>`,
     `    <key name="${SETTINGS.unregisteredShortcuts}" type="as">\n      <default>[]</default>\n      <summary>Internal: actions whose keybinding Mutter refused, shown as warnings in the preferences</summary>\n    </key>`,
     `    <key name="${SETTINGS.overriddenShortcuts}" type="s">\n      <default>''</default>\n      <summary>Internal: original GNOME shortcuts saved while overridden (JSON)</summary>\n    </key>`,
+    ...CUSTOM_LAYOUT_DEFAULTS.map(
+      (edges, i) =>
+        `    <key name="${customLayoutKey(i + 1)}" type="ai">\n      <default>[${edges.join(', ')}]</default>\n      <summary>Custom Layout ${i + 1}: left, right, top and bottom edges in percent</summary>\n    </key>`,
+    ),
     ...ACTIONS.map((a) => {
       const def = `[${a.defaults.map((d) => `'${escapeXml(d)}'`).join(', ')}]`;
       return `    <key name="${a.id}" type="as">\n      <default>${def}</default>\n      <summary>${a.label}</summary>\n    </key>`;
