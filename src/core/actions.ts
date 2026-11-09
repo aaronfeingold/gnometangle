@@ -2,7 +2,8 @@
 // shortcuts and what it does. The GSettings schema is generated from this list at build time.
 // This module must stay free of imports so the build script can evaluate it.
 
-export type ActionGroup = 'halves' | 'corners' | 'thirds' | 'fourths' | 'size' | 'move' | 'workspace' | 'display';
+export type ActionGroup =
+  'halves' | 'corners' | 'thirds' | 'fourths' | 'custom' | 'size' | 'move' | 'workspace' | 'display';
 
 export type Edge = 'left' | 'right' | 'top' | 'bottom';
 
@@ -41,6 +42,8 @@ export type ActionBehavior =
       readonly majorAxis?: boolean;
     }
   | { readonly kind: 'almost-maximize' | 'maximize-height' | 'center' | 'restore' }
+  /** A region the user sets in the preferences, stored under `customLayoutKey(slot)`. */
+  | { readonly kind: 'custom'; readonly slot: number }
   /** Grows or shrinks by the resize step; `axis` limits it to one dimension. */
   | { readonly kind: 'resize'; readonly grow: boolean; readonly axis?: 'width' | 'height' }
   /** Slides to an edge of the work area without resizing. */
@@ -96,6 +99,13 @@ const sendToDisplay = (n: number) => ({
   group: 'display' as const,
   defaults: [] as readonly string[],
   behavior: { kind: 'display', target: n } as const,
+});
+const customLayout = (slot: number) => ({
+  id: `custom-layout-${slot}` as const,
+  label: `Custom Layout ${slot}`,
+  group: 'custom' as const,
+  defaults: [] as readonly string[],
+  behavior: { kind: 'custom', slot } as const,
 });
 const sendToWorkspace = (n: number) => ({
   id: `send-to-workspace-${n}` as const,
@@ -210,6 +220,8 @@ export const ACTIONS = [
     defaults: [],
     behavior: segment(0.25, 1),
   },
+
+  ...[1, 2, 3, 4].map(customLayout),
 
   {
     id: 'maximize-window',
@@ -401,6 +413,7 @@ export const GROUP_LABELS: Record<ActionGroup, string> = {
   corners: 'Corners',
   thirds: 'Thirds',
   fourths: 'Fourths',
+  custom: 'Custom Layouts',
   size: 'Size and Position',
   move: 'Move',
   workspace: 'Workspaces',
@@ -420,6 +433,22 @@ export const SETTINGS = {
   workspaceFollow: 'workspace-follow',
   unregisteredShortcuts: 'unregistered-shortcuts',
 } as const;
+
+/**
+ * Custom layouts: each slot's edges as [left, right, top, bottom] percents of the work area.
+ * The defaults are two 60/40 pairs.
+ */
+export const CUSTOM_LAYOUT_DEFAULTS: readonly (readonly [number, number, number, number])[] = [
+  [0, 60, 0, 100],
+  [60, 100, 0, 100],
+  [0, 40, 0, 100],
+  [40, 100, 0, 100],
+];
+
+/** The GSettings key that holds a custom layout slot's edges, from slot 1. */
+export function customLayoutKey(slot: number): string {
+  return `custom-layout-${slot}-edges`;
+}
 
 export const SCHEMA_ID = 'org.gnome.shell.extensions.gnometangle';
 export const SCHEMA_PATH = '/org/gnome/shell/extensions/gnometangle/';

@@ -22,63 +22,63 @@ msgstr ""
 msgid "Customize Shortcuts…"
 msgstr ""
 
-#: src/prefs.ts:47
+#: src/prefs.ts:59
 msgid "General"
 msgstr ""
 
-#: src/prefs.ts:49
+#: src/prefs.ts:61
 msgid "Layout"
 msgstr ""
 
-#: src/prefs.ts:50
+#: src/prefs.ts:62
 msgid "Gap Size"
 msgstr ""
 
-#: src/prefs.ts:50
+#: src/prefs.ts:62
 msgid "Pixels between windows and screen edges"
 msgstr ""
 
-#: src/prefs.ts:55
+#: src/prefs.ts:67
 msgid "Almost Maximize Size"
 msgstr ""
 
-#: src/prefs.ts:56
+#: src/prefs.ts:68
 msgid "Percent of the screen used by Almost Maximize"
 msgstr ""
 
-#: src/prefs.ts:65
+#: src/prefs.ts:77
 msgid "Resize Step"
 msgstr ""
 
-#: src/prefs.ts:66
+#: src/prefs.ts:78
 msgid "Pixels added or removed by Make Larger and Make Smaller"
 msgstr ""
 
-#: src/prefs.ts:73
+#: src/prefs.ts:85
 msgid "Behavior"
 msgstr ""
 
-#: src/prefs.ts:78
+#: src/prefs.ts:90
 msgid "Show Icon in Top Bar"
 msgstr ""
 
-#: src/prefs.ts:79
+#: src/prefs.ts:91
 msgid "A menu that lists every action with its shortcut, and runs it on click"
 msgstr ""
 
-#: src/prefs.ts:86
+#: src/prefs.ts:98
 msgid "Cycle Sizes on Repeat"
 msgstr ""
 
-#: src/prefs.ts:87
+#: src/prefs.ts:99
 msgid "Pressing a half shortcut again cycles through 1/2, 2/3 and 1/3"
 msgstr ""
 
-#: src/prefs.ts:94
+#: src/prefs.ts:106
 msgid "Enable Overrides"
 msgstr ""
 
-#: src/prefs.ts:96
+#: src/prefs.ts:108
 msgid ""
 "Lets Gnometangle use keys that GNOME also assigns, such as Ctrl+Alt+Arrow "
 "for switching workspaces and Ctrl+Alt+Shift+Up for moving a window up a "
@@ -86,81 +86,114 @@ msgid ""
 "position. Turning this off gives those keys back to GNOME."
 msgstr ""
 
-#: src/prefs.ts:104
+#: src/prefs.ts:116
 msgid "Follow Windows to Other Workspaces"
 msgstr ""
 
-#: src/prefs.ts:105
+#: src/prefs.ts:117
 msgid "Switch to the workspace a window is sent to"
 msgstr ""
 
-#: src/prefs.ts:128
+#: src/prefs.ts:140
 msgid "Ignored Apps"
 msgstr ""
 
-#: src/prefs.ts:130
+#: src/prefs.ts:142
 msgid ""
 "Gnometangle's shortcuts are turned off while one of these apps has focus, so "
 "the app gets those keys. The top bar menu still works."
 msgstr ""
 
-#: src/prefs.ts:135 src/prefs.ts:181
+#: src/prefs.ts:147 src/prefs.ts:193
 msgid "Add App"
 msgstr ""
 
-#: src/prefs.ts:157
+#: src/prefs.ts:169
 msgid "Remove"
 msgstr ""
 
-#: src/prefs.ts:170
+#: src/prefs.ts:182
 msgid "No ignored apps"
 msgstr ""
 
-#: src/prefs.ts:187
+#: src/prefs.ts:199
 msgid "Search apps"
 msgstr ""
 
-#: src/prefs.ts:226
+#: src/prefs.ts:238
 msgid "Shortcuts"
 msgstr ""
 
-#: src/prefs.ts:229
+#: src/prefs.ts:241
 msgid ""
 "Select a shortcut to change it. Press Backspace in the dialog to disable it."
 msgstr ""
 
-#: src/prefs.ts:231
+#: src/prefs.ts:243
 msgid "Reset All"
 msgstr ""
 
-#: src/prefs.ts:282
+#: src/prefs.ts:300
 msgid "Disabled"
 msgstr ""
 
-#: src/prefs.ts:285
+#: src/prefs.ts:303
 msgid "Reset to default"
 msgstr ""
 
-#: src/prefs.ts:307
+#: src/prefs.ts:312
+msgid "Change shortcut"
+msgstr ""
+
+#: src/prefs.ts:337
 msgid "Click to choose other keys."
 msgstr ""
 
-#: src/prefs.ts:314
+#: src/prefs.ts:468
+msgid "Left Edge"
+msgstr ""
+
+#: src/prefs.ts:468 src/prefs.ts:469
+msgid "Percent from the left of the screen"
+msgstr ""
+
+#: src/prefs.ts:469
+msgid "Right Edge"
+msgstr ""
+
+#: src/prefs.ts:470
+msgid "Top Edge"
+msgstr ""
+
+#: src/prefs.ts:470 src/prefs.ts:471
+msgid "Percent from the top of the screen"
+msgstr ""
+
+#: src/prefs.ts:471
+msgid "Bottom Edge"
+msgstr ""
+
+#: src/prefs.ts:490
+#, javascript-format
+msgid "%1$s%% wide, %2$s%% tall, from %3$s%% left and %4$s%% top"
+msgstr ""
+
+#: src/prefs.ts:512
 msgid "Set Shortcut"
 msgstr ""
 
 #. Translators: %s is an action name, such as "Left Half".
-#: src/prefs.ts:329
+#: src/prefs.ts:527
 #, javascript-format
 msgid "Press a new shortcut for %s"
 msgstr ""
 
-#: src/prefs.ts:332
+#: src/prefs.ts:530
 msgid "Esc to cancel, Backspace to disable"
 msgstr ""
 
 #. Translators: %s is an action name, such as "Left Half".
-#: src/prefs.ts:361
+#: src/prefs.ts:559
 #, javascript-format
 msgid "Removed the same shortcut from %s"
 msgstr ""
@@ -179,6 +212,10 @@ msgstr ""
 
 #: src/core/actions.ts
 msgid "Fourths"
+msgstr ""
+
+#: src/core/actions.ts
+msgid "Custom Layouts"
 msgstr ""
 
 #: src/core/actions.ts
@@ -283,6 +320,22 @@ msgstr ""
 
 #: src/core/actions.ts
 msgid "Last Three Fourths"
+msgstr ""
+
+#: src/core/actions.ts
+msgid "Custom Layout 1"
+msgstr ""
+
+#: src/core/actions.ts
+msgid "Custom Layout 2"
+msgstr ""
+
+#: src/core/actions.ts
+msgid "Custom Layout 3"
+msgstr ""
+
+#: src/core/actions.ts
+msgid "Custom Layout 4"
 msgstr ""
 
 #: src/core/actions.ts

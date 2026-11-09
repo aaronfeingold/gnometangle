@@ -200,6 +200,22 @@ to register it. Click the icon in the preferences to choose other keys.
 
 <br clear="right">
 
+## Custom layouts
+
+Four **Custom Layout** actions put the window wherever you choose, for sizes the built-in actions don't cover. Out of
+the box they are two 60/40 pairs: Custom Layout 1 is the left 60%, 2 the right 40%, 3 the left 40% and 4 the right
+60%. They have no shortcuts until you give them some.
+
+In the preferences, under **Shortcuts**, **Custom Layouts**:
+
+1. Expand a layout and set its left, right, top and bottom edges in percent of the screen. The preview and the summary
+   under the name update as you type.
+2. Click the shortcut on the row to give it keys.
+
+Edges entered the wrong way round are swapped, values are kept between 0 and 100, and a layout is never smaller than
+5% on either side. The gap setting applies like it does for every other layout. Custom layouts are also in the top
+bar menu.
+
 ## Settings
 
 Open them from the top bar menu (**Customize Shortcuts…**) or with
@@ -256,7 +272,6 @@ issues labeled [good first issue](https://github.com/aaronfeingold/gnometangle/l
 ## Roadmap
 
 - Drag-to-edge snap areas
-- User-defined layouts
 - Per-application rules
 - Publish on extensions.gnome.org
 

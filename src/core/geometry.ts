@@ -1,4 +1,5 @@
 import { behaviorOf, type ActionId, type Edge } from './actions.js';
+import { layoutRegion } from './layouts.js';
 import type { Rect, Region } from './types.js';
 
 export interface GeometryOptions {
@@ -8,6 +9,8 @@ export interface GeometryOptions {
   almostMaximizeRatio: number;
   /** Pixels added or removed on each side by Make Larger and Make Smaller. */
   sizeStep: number;
+  /** The custom layout regions, by slot from 1 (index 0 is slot 1). */
+  customLayouts?: readonly Region[];
 }
 
 export interface GeometryContext extends GeometryOptions {
@@ -210,6 +213,10 @@ export function computeTarget(action: ActionId, ctx: GeometryContext, cycle = tr
     case 'maximize-height': {
       const g = Math.max(0, gap);
       return { x: current.x, y: workArea.y + g, width: current.width, height: workArea.height - 2 * g };
+    }
+    case 'custom': {
+      const custom = ctx.customLayouts?.[behavior.slot - 1] ?? layoutRegion([], behavior.slot);
+      return applyGap(regionToRect(custom, workArea), workArea, gap);
     }
     case 'resize':
       return resizeRect(current, workArea, ctx.sizeStep, behavior.grow, behavior.axis);

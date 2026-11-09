@@ -27,7 +27,7 @@ describe('previewOf', () => {
   });
 
   it('follows the Almost Maximize setting', () => {
-    const preview = previewOf(behaviorOf('almost-maximize'), 0.8);
+    const preview = previewOf(behaviorOf('almost-maximize'), { almostMaximize: 0.8 });
     if (preview.kind !== 'layout') throw new Error('expected a layout');
     for (const [got, want] of [
       [preview.window.x0, 0.1],
@@ -48,6 +48,17 @@ describe('previewOf', () => {
     const width = previewOf(behaviorOf('larger-width'));
     if (width.kind !== 'layout') throw new Error('expected a layout');
     expect(width.window.y1 - width.window.y0).toBeCloseTo(width.before!.y1 - width.before!.y0);
+  });
+
+  it('shows the custom layout for its slot', () => {
+    const layouts = [
+      { x0: 0, x1: 0.6, y0: 0, y1: 1 },
+      { x0: 0.6, x1: 1, y0: 0, y1: 1 },
+    ];
+    expect(previewOf(behaviorOf('custom-layout-2'), { customLayouts: layouts })).toEqual({
+      kind: 'layout',
+      window: layouts[1],
+    });
   });
 
   it('uses icons for actions without a fixed position', () => {

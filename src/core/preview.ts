@@ -26,14 +26,24 @@ const EDGE_ICONS = {
   bottom: 'go-down-symbolic',
 };
 
-/** `almostMaximize` is the Almost Maximize size as a fraction, so its preview follows the setting. */
-export function previewOf(behavior: ActionBehavior, almostMaximize = 0.9): Preview {
+/** Settings some previews follow, so they match what the action does. */
+export interface PreviewOptions {
+  /** The Almost Maximize size as a fraction. */
+  almostMaximize?: number;
+  /** The custom layout regions, by slot from 1 (index 0 is slot 1). */
+  customLayouts?: readonly Region[];
+}
+
+export function previewOf(behavior: ActionBehavior, options: PreviewOptions = {}): Preview {
+  const almostMaximize = options.almostMaximize ?? 0.9;
   switch (behavior.kind) {
     case 'region':
       // A cycling action shows its first size, which is what the first press does.
       return { kind: 'layout', window: behavior.regions[0]! };
     case 'almost-maximize':
       return { kind: 'layout', window: centered(almostMaximize, almostMaximize) };
+    case 'custom':
+      return { kind: 'layout', window: options.customLayouts?.[behavior.slot - 1] ?? box(0, 1, 0, 1) };
     case 'maximize-height':
       return { kind: 'layout', window: box(0.3, 0.7, 0, 1), before: centered(0.4, 0.5) };
     case 'center':

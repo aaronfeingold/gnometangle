@@ -4,9 +4,10 @@
 import type Gio from 'gi://Gio';
 import Meta from 'gi://Meta';
 
-import { SETTINGS, behaviorOf, type ActionId } from './core/actions.js';
+import { CUSTOM_LAYOUT_DEFAULTS, SETTINGS, behaviorOf, customLayoutKey, type ActionId } from './core/actions.js';
 import { nextHistory, type WindowHistory } from './core/cycle.js';
 import { computeTarget, mapToWorkArea, moveToWorkArea, rectsClose } from './core/geometry.js';
+import { layoutRegion } from './core/layouts.js';
 import { orderMonitors, resolveDisplay } from './core/monitors.js';
 import type { Rect } from './core/types.js';
 import { workspacePlan } from './core/workspaces.js';
@@ -76,6 +77,7 @@ export class Snapper {
         gap: settings.get_int(SETTINGS.gapSize),
         almostMaximizeRatio: settings.get_int(SETTINGS.almostMaximizePercent) / 100,
         sizeStep: settings.get_int(SETTINGS.sizeStep),
+        customLayouts: readCustomLayouts(settings),
       },
       cycle,
     );
@@ -189,6 +191,13 @@ export class Snapper {
     win.move_to_monitor(to);
     this.mover.apply(win, target);
   }
+}
+
+/** The custom layout regions from the settings, by slot from 1. */
+export function readCustomLayouts(settings: Gio.Settings) {
+  return CUSTOM_LAYOUT_DEFAULTS.map((_, i) =>
+    layoutRegion(settings.get_value(customLayoutKey(i + 1)).deepUnpack<number[]>(), i + 1),
+  );
 }
 
 function monitorGeometries(): Rect[] {

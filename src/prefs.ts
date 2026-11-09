@@ -1,13 +1,24 @@
 import Adw from 'gi://Adw';
 import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 import Gtk from 'gi://Gtk';
 
 import { ExtensionPreferences, gettext as _ } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 import { releaseAccelerator } from './core/accelerators.js';
-import { ACTIONS, GROUP_LABELS, SETTINGS, type ActionDef, type ActionGroup, type Region } from './core/actions.js';
-import { previewOf } from './core/preview.js';
+import {
+  ACTIONS,
+  CUSTOM_LAYOUT_DEFAULTS,
+  customLayoutKey,
+  GROUP_LABELS,
+  SETTINGS,
+  type ActionDef,
+  type ActionGroup,
+  type Region,
+} from './core/actions.js';
+import { layoutRegion } from './core/layouts.js';
+import { previewOf, type PreviewOptions } from './core/preview.js';
 import {
   lookupSettings,
   problemText,
@@ -269,8 +280,13 @@ function shortcutRow(
   settings: Gio.Settings,
   action: ActionDef,
   window: Adw.PreferencesWindow,
-): [Adw.ActionRow, (problems: ReadonlyMap<string, ShortcutProblem>) => void] {
-  const row = new Adw.ActionRow({ title: _(action.label), activatable: true });
+): [Adw.PreferencesRow, (problems: ReadonlyMap<string, ShortcutProblem>) => void] {
+  // A custom layout expands to its edges, so its shortcut is a button instead of the whole row.
+  const custom = action.behavior.kind === 'custom' ? action.behavior.slot : null;
+  const row =
+    custom === null
+      ? new Adw.ActionRow({ title: _(action.label), activatable: true })
+      : new Adw.ExpanderRow({ title: _(action.label) });
   row.add_prefix(previewWidget(settings, action));
   // Offers a rebind: the reason is in the tooltip, and clicking opens the shortcut recorder.
   const warning = new Gtk.Button({
@@ -288,8 +304,20 @@ function shortcutRow(
     valign: Gtk.Align.CENTER,
     css_classes: ['flat'],
   });
-  row.add_suffix(label);
+  if (custom === null) {
+    row.add_suffix(label);
+  } else {
+    const change = new Gtk.Button({
+      child: label,
+      tooltip_text: _('Change shortcut'),
+      valign: Gtk.Align.CENTER,
+      css_classes: ['flat'],
+    });
+    change.connect('clicked', () => captureShortcut(settings, action, window));
+    row.add_suffix(change);
+  }
   row.add_suffix(reset);
+  if (custom !== null) addEdgeRows(settings, row as Adw.ExpanderRow, custom);
 
   const refresh = () => {
     const value = settings.get_strv(action.id);
@@ -301,7 +329,7 @@ function shortcutRow(
   row.connect('destroy', () => settings.disconnect(handler));
 
   reset.connect('clicked', () => settings.reset(action.id));
-  row.connect('activated', () => captureShortcut(settings, action, window));
+  if (row instanceof Adw.ActionRow) row.connect('activated', () => captureShortcut(settings, action, window));
 
   const showProblem = (problems: ReadonlyMap<string, ShortcutProblem>) => {
     const problem = problems.get(action.id);
@@ -329,6 +357,17 @@ const PREVIEW_HEIGHT = 26;
 // GNOME's default accent, for libadwaita before 1.6, which has no accent color setting.
 const FALLBACK_ACCENT = { red: 0x35 / 255, green: 0x84 / 255, blue: 0xe4 / 255 };
 
+function readEdges(settings: Gio.Settings, slot: number): number[] {
+  return settings.get_value(customLayoutKey(slot)).deepUnpack<number[]>();
+}
+
+function previewOptions(settings: Gio.Settings): PreviewOptions {
+  return {
+    almostMaximize: settings.get_int(SETTINGS.almostMaximizePercent) / 100,
+    customLayouts: CUSTOM_LAYOUT_DEFAULTS.map((_, i) => layoutRegion(readEdges(settings, i + 1), i + 1)),
+  };
+}
+
 function roundedRect(cr: Cairo, x: number, y: number, w: number, h: number, r: number): void {
   const radius = Math.min(r, w / 2, h / 2);
   cr.newSubPath();
@@ -349,8 +388,7 @@ function accentColor(): { red: number; green: number; blue: number } {
  * icon for actions that don't place it at a fixed spot.
  */
 function previewWidget(settings: Gio.Settings, action: ActionDef): Gtk.Widget {
-  const almostMaximize = () => settings.get_int(SETTINGS.almostMaximizePercent) / 100;
-  const first = previewOf(action.behavior, almostMaximize());
+  const first = previewOf(action.behavior, previewOptions(settings));
   if (first.kind === 'icon') {
     const icon = new Gtk.Image({ icon_name: first.icon, pixel_size: 16, css_classes: ['dim-label'] });
     const holder = new Gtk.Box({ width_request: PREVIEW_WIDTH, valign: Gtk.Align.CENTER });
@@ -366,7 +404,7 @@ function previewWidget(settings: Gio.Settings, action: ActionDef): Gtk.Widget {
   });
   area.set_draw_func((widget, context, width, height) => {
     const cr = context as unknown as Cairo;
-    const preview = previewOf(action.behavior, almostMaximize());
+    const preview = previewOf(action.behavior, previewOptions(settings));
     if (preview.kind !== 'layout') return;
     const fg = widget.get_color();
     const accent = accentColor();
@@ -404,20 +442,69 @@ function previewWidget(settings: Gio.Settings, action: ActionDef): Gtk.Widget {
     cr.$dispose();
   });
 
-  // Redraw when the accent color, light/dark style or Almost Maximize size changes.
+  // Redraw when the accent color, light/dark style, Almost Maximize size or custom layout changes.
   const styles = Adw.StyleManager.get_default();
   const redraw = () => area.queue_draw();
   // libadwaita before 1.6 has no accent-color property; that notify signal then just never fires.
   const styleHandlers = ['notify::dark', 'notify::accent-color'].map((signal) => styles.connect(signal, redraw));
-  const settingsHandler =
+  const watchedKey =
     action.behavior.kind === 'almost-maximize'
-      ? settings.connect(`changed::${SETTINGS.almostMaximizePercent}`, redraw)
-      : 0;
+      ? SETTINGS.almostMaximizePercent
+      : action.behavior.kind === 'custom'
+        ? customLayoutKey(action.behavior.slot)
+        : null;
+  const settingsHandler = watchedKey ? settings.connect(`changed::${watchedKey}`, redraw) : 0;
   area.connect('destroy', () => {
     styleHandlers.forEach((id) => styles.disconnect(id));
     if (settingsHandler) settings.disconnect(settingsHandler);
   });
   return area;
+}
+
+/** The four edge rows inside a custom layout, and a subtitle that sums the layout up. */
+function addEdgeRows(settings: Gio.Settings, row: Adw.ExpanderRow, slot: number): void {
+  const key = customLayoutKey(slot);
+  const edges = [
+    { title: _('Left Edge'), subtitle: _('Percent from the left of the screen') },
+    { title: _('Right Edge'), subtitle: _('Percent from the left of the screen') },
+    { title: _('Top Edge'), subtitle: _('Percent from the top of the screen') },
+    { title: _('Bottom Edge'), subtitle: _('Percent from the top of the screen') },
+  ].map(({ title, subtitle }) => {
+    const spin = Adw.SpinRow.new_with_range(0, 100, 5);
+    spin.set_title(title);
+    spin.set_subtitle(subtitle);
+    row.add_row(spin);
+    return spin;
+  });
+
+  let syncing = false;
+  const refresh = () => {
+    const values = readEdges(settings, slot);
+    const region = layoutRegion(values, slot);
+    syncing = true;
+    edges.forEach((spin, i) => spin.set_value(values[i] ?? 0));
+    syncing = false;
+    const pct = (v: number) => Math.round(v * 100);
+    // Translators: describes a custom layout, e.g. "60% wide, 100% tall, from 0% left and 0% top".
+    row.set_subtitle(
+      _('%1$s%% wide, %2$s%% tall, from %3$s%% left and %4$s%% top')
+        .replace('%1$s', String(pct(region.x1 - region.x0)))
+        .replace('%2$s', String(pct(region.y1 - region.y0)))
+        .replace('%3$s', String(pct(region.x0)))
+        .replace('%4$s', String(pct(region.y0)))
+        .replaceAll('%%', '%'),
+    );
+  };
+  for (const spin of edges) {
+    spin.connect('notify::value', () => {
+      if (syncing) return;
+      const values = edges.map((s) => Math.round(s.get_value()));
+      settings.set_value(key, new GLib.Variant('ai', values));
+    });
+  }
+  refresh();
+  const handler = settings.connect(`changed::${key}`, refresh);
+  row.connect('destroy', () => settings.disconnect(handler));
 }
 
 function captureShortcut(settings: Gio.Settings, action: ActionDef, window: Adw.PreferencesWindow): void {
