@@ -6,6 +6,8 @@
 
 - **Rotate Display Right**, **Rotate Display Left** and **Reset Display Rotation** turn the display your window is on,
   for a laptop on its side or a monitor on a pivot stand. Unset by default: give them keys in the preferences.
+- **Snap previews in the preferences.** Every shortcut shows a small picture of where it puts the window, drawn in
+  your accent color. Resize actions show the old size as a dashed outline, and the rest get an icon.
 
 ### Changed
 

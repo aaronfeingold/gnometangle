@@ -6,7 +6,8 @@ import Gtk from 'gi://Gtk';
 import { ExtensionPreferences, gettext as _ } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 import { releaseAccelerator } from './core/accelerators.js';
-import { ACTIONS, GROUP_LABELS, SETTINGS, type ActionDef, type ActionGroup } from './core/actions.js';
+import { ACTIONS, GROUP_LABELS, SETTINGS, type ActionDef, type ActionGroup, type Region } from './core/actions.js';
+import { previewOf } from './core/preview.js';
 import {
   lookupSettings,
   problemText,
@@ -270,6 +271,7 @@ function shortcutRow(
   window: Adw.PreferencesWindow,
 ): [Adw.ActionRow, (problems: ReadonlyMap<string, ShortcutProblem>) => void] {
   const row = new Adw.ActionRow({ title: _(action.label), activatable: true });
+  row.add_prefix(previewWidget(settings, action));
   // Offers a rebind: the reason is in the tooltip, and clicking opens the shortcut recorder.
   const warning = new Gtk.Button({
     icon_name: 'dialog-warning-symbolic',
@@ -307,6 +309,115 @@ function shortcutRow(
     if (problem) warning.set_tooltip_text(`${problemText(problem, _)}\n${_('Click to choose other keys.')}`);
   };
   return [row, showProblem];
+}
+
+/** The parts of a cairo context the previews use; GJS's cairo bindings have no bundled types. */
+interface Cairo {
+  setSourceRGBA(r: number, g: number, b: number, a: number): void;
+  setLineWidth(width: number): void;
+  setDash(dashes: number[], offset: number): void;
+  newSubPath(): void;
+  arc(x: number, y: number, radius: number, angle1: number, angle2: number): void;
+  closePath(): void;
+  fill(): void;
+  stroke(): void;
+  $dispose(): void;
+}
+
+const PREVIEW_WIDTH = 40;
+const PREVIEW_HEIGHT = 26;
+// GNOME's default accent, for libadwaita before 1.6, which has no accent color setting.
+const FALLBACK_ACCENT = { red: 0x35 / 255, green: 0x84 / 255, blue: 0xe4 / 255 };
+
+function roundedRect(cr: Cairo, x: number, y: number, w: number, h: number, r: number): void {
+  const radius = Math.min(r, w / 2, h / 2);
+  cr.newSubPath();
+  cr.arc(x + w - radius, y + radius, radius, -Math.PI / 2, 0);
+  cr.arc(x + w - radius, y + h - radius, radius, 0, Math.PI / 2);
+  cr.arc(x + radius, y + h - radius, radius, Math.PI / 2, Math.PI);
+  cr.arc(x + radius, y + radius, radius, Math.PI, (3 * Math.PI) / 2);
+  cr.closePath();
+}
+
+function accentColor(): { red: number; green: number; blue: number } {
+  const styles = Adw.StyleManager.get_default();
+  return 'get_accent_color_rgba' in styles ? styles.get_accent_color_rgba() : FALLBACK_ACCENT;
+}
+
+/**
+ * A miniature screen showing where the action puts the window, in the accent color, or a symbolic
+ * icon for actions that don't place it at a fixed spot.
+ */
+function previewWidget(settings: Gio.Settings, action: ActionDef): Gtk.Widget {
+  const almostMaximize = () => settings.get_int(SETTINGS.almostMaximizePercent) / 100;
+  const first = previewOf(action.behavior, almostMaximize());
+  if (first.kind === 'icon') {
+    const icon = new Gtk.Image({ icon_name: first.icon, pixel_size: 16, css_classes: ['dim-label'] });
+    const holder = new Gtk.Box({ width_request: PREVIEW_WIDTH, valign: Gtk.Align.CENTER });
+    icon.set_hexpand(true);
+    holder.append(icon);
+    return holder;
+  }
+
+  const area = new Gtk.DrawingArea({
+    content_width: PREVIEW_WIDTH,
+    content_height: PREVIEW_HEIGHT,
+    valign: Gtk.Align.CENTER,
+  });
+  area.set_draw_func((widget, context, width, height) => {
+    const cr = context as unknown as Cairo;
+    const preview = previewOf(action.behavior, almostMaximize());
+    if (preview.kind !== 'layout') return;
+    const fg = widget.get_color();
+    const accent = accentColor();
+    const inset = 1;
+    const rect = (r: Region, pad: number) =>
+      roundedRect(
+        cr,
+        inset + pad + r.x0 * (width - 2 * (inset + pad)),
+        inset + pad + r.y0 * (height - 2 * (inset + pad)),
+        (r.x1 - r.x0) * (width - 2 * (inset + pad)),
+        (r.y1 - r.y0) * (height - 2 * (inset + pad)),
+        2,
+      );
+
+    // The screen.
+    roundedRect(cr, inset, inset, width - 2 * inset, height - 2 * inset, 4);
+    cr.setSourceRGBA(fg.red, fg.green, fg.blue, 0.08);
+    cr.fill();
+    roundedRect(cr, inset, inset, width - 2 * inset, height - 2 * inset, 4);
+    cr.setLineWidth(1);
+    cr.setSourceRGBA(fg.red, fg.green, fg.blue, 0.35);
+    cr.stroke();
+
+    // The window, inset a little so it reads as a window on the screen.
+    rect(preview.window, 2);
+    cr.setSourceRGBA(accent.red, accent.green, accent.blue, 1);
+    cr.fill();
+
+    if (preview.before) {
+      rect(preview.before, 2);
+      cr.setDash([2, 2], 0);
+      cr.setSourceRGBA(fg.red, fg.green, fg.blue, 0.7);
+      cr.stroke();
+    }
+    cr.$dispose();
+  });
+
+  // Redraw when the accent color, light/dark style or Almost Maximize size changes.
+  const styles = Adw.StyleManager.get_default();
+  const redraw = () => area.queue_draw();
+  // libadwaita before 1.6 has no accent-color property; that notify signal then just never fires.
+  const styleHandlers = ['notify::dark', 'notify::accent-color'].map((signal) => styles.connect(signal, redraw));
+  const settingsHandler =
+    action.behavior.kind === 'almost-maximize'
+      ? settings.connect(`changed::${SETTINGS.almostMaximizePercent}`, redraw)
+      : 0;
+  area.connect('destroy', () => {
+    styleHandlers.forEach((id) => styles.disconnect(id));
+    if (settingsHandler) settings.disconnect(settingsHandler);
+  });
+  return area;
 }
 
 function captureShortcut(settings: Gio.Settings, action: ActionDef, window: Adw.PreferencesWindow): void {
